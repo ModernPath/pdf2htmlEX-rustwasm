@@ -333,14 +333,16 @@ pub fn render_pdf_page(
                     let (tm_x, tm_y) = text_matrix.transform_point(0.0, 0.0);
                     let (page_x, page_y) = ctm.transform_point(tm_x, tm_y);
 
-                    // PDF coordinate system has Y=0 at bottom, increasing upward.
-                    // HTML/CSS has Y=0 at top, increasing downward.
-                    // Always flip Y to convert from PDF device space to CSS top.
-                    let html_y = page_height - page_y;
-
                     // Compute effective font size considering CTM scale
                     let scale_y = (ctm.b * ctm.b + ctm.d * ctm.d).sqrt();
                     let effective_font_size = graphics_state.font_size * scale_y;
+
+                    // PDF coordinate system has Y=0 at bottom, increasing upward.
+                    // HTML/CSS has Y=0 at top, increasing downward.
+                    // Also adjust for baseline: PDF positions text at baseline,
+                    // but CSS top positions the top of the element. Subtract
+                    // approximate ascent (~85% of font size) to align correctly.
+                    let html_y = page_height - page_y - effective_font_size * 0.85;
 
                     let mut state_for_text = graphics_state.clone();
                     state_for_text.font_size = effective_font_size;
