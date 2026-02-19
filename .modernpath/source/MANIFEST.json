@@ -1,0 +1,714 @@
+{
+  "files": [
+    {
+      "complexity": "low",
+      "file_path": "3rdparty/PDF.js/compatibility.js",
+      "language": "javascript",
+      "name": "compatibility.js",
+      "purpose": "To provide a readable implementation of the classList polyfill for older browser compatibility.",
+      "summary": "This file contains the human-readable source code for the `classList` polyfill used in the project. It checks for the existence of the `classList` property on a `div` element; if missing, it defines a property on `HTMLElement.prototype` that returns an object with `add`, `remove`, `contains`, and `toggle` methods. These methods manipulate the element's `className` string by splitting it into an array, modifying the array, and joining it back.",
+      "total_lines": 81
+    },
+    {
+      "complexity": "low",
+      "file_path": "3rdparty/PDF.js/compatibility.min.js",
+      "language": "javascript",
+      "name": "compatibility.min.js",
+      "purpose": "To polyfill the HTMLElement.classList property for browsers that do not support it natively.",
+      "summary": "This file is a minified JavaScript library that adds support for the `classList` property to HTMLElement prototypes if it is not natively supported by the browser. It implements a custom object with methods like `add`, `contains`, `remove`, and `toggle` to manipulate CSS classes on DOM elements. The code is compressed, likely served to clients to reduce payload size while maintaining functionality for legacy environments.",
+      "total_lines": 8
+    },
+    {
+      "complexity": "medium",
+      "file_path": "src/ArgParser.cc",
+      "language": "text",
+      "name": "ArgParser.cc",
+      "purpose": "Encapsulates the logic for parsing command-line arguments, mapping them to specific variables or callback functions within the application.",
+      "summary": "This file implements the `ArgParser` class, which wraps the standard `getopt_long` library to provide a simplified interface for parsing command-line arguments. It supports registering options with descriptions, callbacks, and argument requirements. The implementation handles the construction of the `optstring` and `longopts` structures required by `getopt_long`, maps option identifiers to argument entries, and processes optional positional arguments. It also includes utility functions for reading values into different types and generating usage information.",
+      "total_lines": 177
+    },
+    {
+      "complexity": "medium",
+      "file_path": "src/ArgParser.h",
+      "language": "c",
+      "name": "ArgParser.h",
+      "purpose": "To provide a type-safe, extensible mechanism for parsing command-line arguments and generating usage help text.",
+      "summary": "This header file defines a wrapper around the getopt library for parsing command-line arguments within the pdf2htmlEX namespace. It provides a fluent interface to register arguments via callbacks or variable references, supporting various data types through templates. The design separates argument definition from parsing logic using a polymorphic base class structure and handles automatic generation of usage help text. It also manages optional positional arguments separately from named options.",
+      "total_lines": 220
+    },
+    {
+      "complexity": "medium",
+      "file_path": "src/BackgroundRenderer/BackgroundRenderer.cc",
+      "language": "text",
+      "name": "BackgroundRenderer.cc",
+      "purpose": "To implement renderer instantiation logic and text proofing utilities.",
+      "summary": "This file implements the static factory methods defined in BackgroundRenderer.h, instantiating specific renderers (Cairo or Splash) based on the requested format string and compile-time feature flags. It also contains the implementation of 'proof' rendering functions, which alter text colors (Red, Green, Blue, Yellow) to visualize fill and stroke modes for debugging purposes. The code handles conditional compilation for features like SVG, PNG, and JPEG support.",
+      "total_lines": 131
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/BackgroundRenderer/BackgroundRenderer.h",
+      "language": "c",
+      "name": "BackgroundRenderer.h",
+      "purpose": "To define the interface and factory logic for pluggable background rendering strategies.",
+      "summary": "This file establishes the abstract base class BackgroundRenderer, which defines the contract for all background rendering implementations. It includes factory methods (`getBackgroundRenderer`, `getFallbackBackgroundRenderer`) to instantiate the correct renderer based on configuration parameters. The class also declares protected methods for generating 'proof' output, which visualizes text rendering logic. It serves as the central abstraction point decoupling the main application from specific graphics libraries.",
+      "total_lines": 53
+    },
+    {
+      "complexity": "high",
+      "file_path": "src/BackgroundRenderer/CairoBackgroundRenderer.cc",
+      "language": "text",
+      "name": "CairoBackgroundRenderer.cc",
+      "purpose": "To render PDF page backgrounds into SVG files and manage embedded bitmap resources.",
+      "summary": "This file implements the CairoBackgroundRenderer class, which uses the Cairo library to render PDF pages into SVG format. It manages the creation of SVG surfaces, handles text rendering with specific fallback conditions for complex fonts or modes, and extracts embedded bitmaps (JPEGs) from the PDF to external files to avoid embedding them directly in the SVG. The renderer includes logic to switch to a bitmap renderer if the SVG node count exceeds a configured limit, ensuring performance.",
+      "total_lines": 311
+    },
+    {
+      "complexity": "medium",
+      "file_path": "src/BackgroundRenderer/CairoBackgroundRenderer.h",
+      "language": "c",
+      "name": "CairoBackgroundRenderer.h",
+      "purpose": "To provide a Cairo-based backend for rendering complex PDF backgrounds as vector graphics.",
+      "summary": "This header file declares the CairoBackgroundRenderer class, which inherits from both BackgroundRenderer and CairoOutputDev. It is designed to render PDF elements not supported by the main HTML renderer into vector images using the Cairo graphics library. The class manages bitmap references for embedded images and handles text drawing for proofing purposes. It integrates with the HTMLRenderer to coordinate the overall rendering pipeline.",
+      "total_lines": 76
+    },
+    {
+      "complexity": "medium",
+      "file_path": "src/BackgroundRenderer/SplashBackgroundRenderer.cc",
+      "language": "text",
+      "name": "SplashBackgroundRenderer.cc",
+      "purpose": "To render PDF page backgrounds into raster images (PNG/JPG) and embed them into the HTML output.",
+      "summary": "This file implements the SplashBackgroundRenderer class, which utilizes the Poppler Splash backend to render PDF pages into raster images (PNG or JPEG). It handles initialization of supported image formats based on compilation flags, renders the page content while managing text visibility and annotation processing, and embeds the resulting image into the HTML output either as a base64 data URI or a separate file. The renderer supports specific proof modes and character coverage checks to control rendering fidelity.",
+      "total_lines": 177
+    },
+    {
+      "complexity": "medium",
+      "file_path": "src/BackgroundRenderer/SplashBackgroundRenderer.h",
+      "language": "c",
+      "name": "SplashBackgroundRenderer.h",
+      "purpose": "To provide a Splash-based backend for rendering complex PDF backgrounds as raster images.",
+      "summary": "This header file declares the SplashBackgroundRenderer class, which inherits from BackgroundRenderer and SplashOutputDev. It utilizes the Splash graphics library to render PDF backgrounds into raster bitmap formats. The class supports configurable output formats (PNG, JPG) and handles text drawing and page initialization. It serves as the raster alternative to the vector-based Cairo renderer.",
+      "total_lines": 65
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/Base64Stream.cc",
+      "language": "text",
+      "name": "Base64Stream.cc",
+      "purpose": "To convert binary data streams into Base64 encoded strings.",
+      "summary": "This file implements a Base64 encoder that reads from an input stream and writes the encoded output to a standard C++ ostream. It processes data in 3-byte chunks, mapping them to 4 Base64 characters, and handles padding for the final chunk if the input size is not a multiple of 3. The implementation uses a static lookup table for the Base64 alphabet.",
+      "total_lines": 43
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/Base64Stream.h",
+      "language": "c",
+      "name": "Base64Stream.h",
+      "purpose": "To encode binary data streams into Base64 format for output.",
+      "summary": "This file defines a Base64Stream class that wraps a standard input stream to provide Base64 encoding functionality. It allows for the streaming conversion of binary data to Base64 text, which is useful for embedding resources in HTML documents. The class overloads the stream insertion operator to integrate seamlessly with C++ iostream idioms. The implementation relies on a static encoding table to perform the translation.",
+      "total_lines": 35
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/Color.cc",
+      "language": "text",
+      "name": "Color.cc",
+      "purpose": "To represent and manipulate color data, bridging the application's internal logic with external PDF graphics primitives.",
+      "summary": "This file implements the `Color` class, which encapsulates RGB color values and a transparency flag. It serves as an adapter for external PDF graphics types (GfxRGB, GfxColor), converting between double-precision values and the fixed-point integer types used by the underlying rendering library. The implementation includes constructors for initialization, a distance calculation method for color comparison, and stream output operators for debugging.",
+      "total_lines": 52
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/Color.h",
+      "language": "c",
+      "name": "Color.h",
+      "purpose": "Provides a standardized structure for handling color data, including RGB values and transparency, throughout the PDF to HTML conversion process.",
+      "summary": "This header file defines a `Color` struct within the `pdf2htmlEX` namespace to represent colors, supporting both RGB values and transparency states. It includes constructors for initialization from RGB components or existing `GfxRGB` objects, and an equality operator that accounts for transparency. The struct provides methods to convert to `GfxColor` and calculate color distance, alongside an overloaded stream operator for output. This utility is essential for maintaining visual fidelity when converting PDF graphics to HTML.",
+      "total_lines": 39
+    },
+    {
+      "complexity": "medium",
+      "file_path": "src/CoveredTextDetector.cc",
+      "language": "text",
+      "name": "CoveredTextDetector.cc",
+      "purpose": "To determine if text characters are covered or obscured by other graphical elements in a PDF rendering process.",
+      "summary": "This file implements a text visibility detection system that tracks character bounding boxes and checks if they are obscured by other graphical elements like strokes or fills. It operates by maintaining a list of character boxes and their corner visibility states, updating these states whenever a non-character element is drawn. The design uses a callback mechanism via function pointers to integrate with a Cairo rendering context, allowing for real-time occlusion checks during the rendering pipeline.",
+      "total_lines": 119
+    },
+    {
+      "complexity": "medium",
+      "file_path": "src/CoveredTextDetector.h",
+      "language": "c",
+      "name": "CoveredTextDetector.h",
+      "purpose": "To detect and flag text characters that are visually covered by non-text graphical elements in a PDF page.",
+      "summary": "This C++ header file defines the `CoveredTextDetector` class, which is a component of the rendering pipeline designed to solve the problem of text visibility in complex PDF layouts. It tracks the bounding boxes of drawn characters and non-character graphics (like images or shapes) in the order they are drawn. By comparing these bounding boxes, it determines if any text characters are fully or partially obscured by subsequent graphics, allowing the renderer to handle them appropriately (e.g., by marking them as covered). The class relies on the Cairo graphics library for coordinate data and uses standard vectors for state management.",
+      "total_lines": 69
+    },
+    {
+      "complexity": "high",
+      "file_path": "src/DrawingTracer.cc",
+      "language": "text",
+      "name": "DrawingTracer.cc",
+      "purpose": "To trace and record drawing operations for geometric analysis and text visibility detection.",
+      "summary": "This file implements a tracer that intercepts drawing operations from the PDF rendering pipeline and replays them onto a Cairo recording surface. It maintains a stack of transformation matrices (CTM) to accurately map coordinates. The primary goal is to calculate bounding boxes of drawn elements and pass them to callback functions for occlusion detection, specifically ignoring operations with low opacity.",
+      "total_lines": 448
+    },
+    {
+      "complexity": "medium",
+      "file_path": "src/DrawingTracer.h",
+      "language": "c",
+      "name": "DrawingTracer.h",
+      "purpose": "To trace and intercept drawing operations (characters, images, paths) during PDF rendering and notify registered callbacks.",
+      "summary": "DrawingTracer.h defines a class that traces and monitors drawing operations during the PDF rendering process. It provides callback mechanisms for events like character drawing and image rendering, allowing external logic to react to these events. The class integrates with Cairo for graphics operations and manages state transformations, clipping paths, and stroke/fill operations. It serves as a bridge between the low-level PDF drawing commands and higher-level processing or output generation.",
+      "total_lines": 85
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/HTMLRenderer/draw.cc",
+      "language": "text",
+      "name": "draw.cc",
+      "purpose": "To translate PDF drawing commands (stroke, fill, clip) into actions performed by the internal tracer or state manager.",
+      "summary": "This file implements the drawing primitives for the `HTMLRenderer`, including stroking, filling, and clipping operations. It delegates the actual recording or execution of these drawing commands to a `tracer` object. It also handles transparency groups by tracking depth, ensuring that complex layering in PDFs is managed correctly during the conversion process.",
+      "total_lines": 76
+    },
+    {
+      "complexity": "high",
+      "file_path": "src/HTMLRenderer/font.cc",
+      "language": "text",
+      "name": "font.cc",
+      "purpose": "To extract font data from PDF objects and save them as temporary files for embedding in HTML.",
+      "summary": "This file implements methods to dump embedded fonts from PDF documents to the file system. It distinguishes between standard font formats (TTF, OTF, CFF) by inspecting the PDF font descriptor and handles Type 3 fonts by rendering glyphs to SVG using Cairo. The code involves complex coordinate transformations to ensure Type 3 fonts are rendered with the correct metrics and scale.",
+      "total_lines": 1115
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/HTMLRenderer/form.cc",
+      "language": "text",
+      "name": "form.cc",
+      "purpose": "To convert PDF form widgets into positioned HTML input and div elements.",
+      "summary": "This C++ file implements the logic for processing and rendering PDF form fields into HTML elements within the pdf2htmlEX application. It iterates through widgets on a specific PDF page, calculates their dimensions based on zoom parameters, and generates corresponding HTML tags such as input fields and buttons. The code handles text fields and buttons specifically, applying CSS classes and inline styles for absolute positioning to match the original PDF layout. Unrecognized form field types trigger an error message to the standard error stream.",
+      "total_lines": 77
+    },
+    {
+      "complexity": "high",
+      "file_path": "src/HTMLRenderer/general.cc",
+      "language": "text",
+      "name": "general.cc",
+      "purpose": "To manage the top-level workflow of converting a PDF document into HTML, handling page iteration, background rendering, and file output.",
+      "summary": "This file implements the core orchestration logic for converting PDF documents into HTML format. It handles the main processing loop, iterating through pages, managing DPI scaling, and coordinating with background renderers and text processors. The code integrates external PDF processing libraries (Poppler) and manages output streams for HTML and CSS, including support for splitting pages into separate files. Key design decisions include lazy initialization of renderers, dynamic DPI clamping to prevent excessive memory usage, and the use of a tracer to detect covered text.",
+      "total_lines": 613
+    },
+    {
+      "complexity": "high",
+      "file_path": "src/HTMLRenderer/HTMLRenderer.h",
+      "language": "c",
+      "name": "HTMLRenderer.h",
+      "purpose": "To define the interface and state management for converting PDF documents into HTML representation.",
+      "summary": "This header defines the `HTMLRenderer` class, which inherits from Poppler's `OutputDev` to intercept PDF rendering commands. It outlines the complete lifecycle of the conversion process, from page start/end to text and image drawing. The class manages complex state tracking, font installation (embedded vs. external), and CSS generation, serving as the central coordinator for the application.",
+      "total_lines": 387
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/HTMLRenderer/image.cc",
+      "language": "text",
+      "name": "image.cc",
+      "purpose": "To manage the rendering of PDF image content, handling delegation to the underlying output device and tracing rendering events.",
+      "summary": "This file implements image handling methods for the HTMLRenderer class within the pdf2htmlEX namespace. It primarily overrides methods to draw images and soft-masked images, currently delegating the actual rendering to the parent OutputDev class. The code includes commented-out logic that suggests a previous or future implementation where images are extracted to PNG files and embedded as HTML img tags. A tracer object is invoked to record image drawing events for debugging or analysis purposes.",
+      "total_lines": 86
+    },
+    {
+      "complexity": "medium",
+      "file_path": "src/HTMLRenderer/link.cc",
+      "language": "text",
+      "name": "link.cc",
+      "purpose": "To convert PDF link annotations into interactive HTML elements with accurate positioning and styling.",
+      "summary": "This file implements the logic for processing PDF link annotations within the HTMLRenderer. It translates PDF link destinations (internal page jumps or external URIs) into HTML anchor tags while calculating the precise CSS positioning and styling for the link's visual representation (border, color, rectangle). The code handles various PDF link destination types (XYZ, Fit, FitR, etc.) and maps PDF border styles to CSS border styles. It also includes specific fixes for browser compatibility, such as setting a transparent background color for Internet Explorer.",
+      "total_lines": 320
+    },
+    {
+      "complexity": "high",
+      "file_path": "src/HTMLRenderer/state.cc",
+      "language": "text",
+      "name": "state.cc",
+      "purpose": "To track PDF state changes and update the internal renderer state to determine when new HTML elements (lines, spans) are needed.",
+      "summary": "This file handles the tracking of PDF state changes and updates the internal HTML renderer state accordingly. It implements a series of update methods corresponding to Poppler's state change callbacks, tracking changes to fonts, transformations, colors, and clipping regions. The code includes logic to determine when a new line or new text state is required based on the magnitude of state changes, optimizing the output HTML structure. It also handles complex matrix transformations to map PDF coordinates to CSS-compatible font sizes and transforms.",
+      "total_lines": 543
+    },
+    {
+      "complexity": "high",
+      "file_path": "src/HTMLRenderer/text.cc",
+      "language": "text",
+      "name": "text.cc",
+      "purpose": "To parse PDF text strings, calculate character positions and metrics, and append the resulting text data to the HTML output structure.",
+      "summary": "This file implements the text rendering logic for the HTMLRenderer class, specifically the drawString method which processes raw PDF text strings. It iterates through characters, handling font-specific metrics like ascent, width, and glyph origins, while accounting for character and word spacing. The code includes logic to skip rendering for specific font types (like Type 3 or writing mode fonts) that are handled as images elsewhere. It also manages ligature decomposition, Unicode mapping, and the calculation of text displacement for accurate HTML positioning.",
+      "total_lines": 202
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/HTMLState.h",
+      "language": "c",
+      "name": "HTMLState.h",
+      "purpose": "To define the state structures required for rendering PDF content into HTML.",
+      "summary": "This header file defines several structures that represent the state of the HTML output generation. 'FontInfo' holds metadata about fonts, including scaling factors for Type 3 fonts. 'HTMLTextState' tracks current text properties like font, color, and spacing. 'HTMLLineState' manages positioning and visibility checks for lines of text, and 'HTMLClipState' defines clipping boundaries.",
+      "total_lines": 83
+    },
+    {
+      "complexity": "high",
+      "file_path": "src/HTMLTextLine.cc",
+      "language": "text",
+      "name": "HTMLTextLine.cc",
+      "purpose": "To convert PDF line data structures into optimized HTML/CSS markup.",
+      "summary": "This file implements the logic for rendering a single line of text from a PDF into HTML. It manages text content, offsets, and style states, optimizing the output by merging styles and handling whitespace intelligently. The code constructs a tree of span elements based on text states and handles clipping regions to hide or show specific characters. It also manages absolute positioning and CSS transforms for the line container.",
+      "total_lines": 737
+    },
+    {
+      "complexity": "high",
+      "file_path": "src/HTMLTextLine.h",
+      "language": "c",
+      "name": "HTMLTextLine.h",
+      "purpose": "Encapsulates the logic for converting a line of PDF text into an optimized HTML structure, managing text content, positioning, and styling states.",
+      "summary": "This header defines the `HTMLTextLine` class, which is responsible for storing and optimizing a line of text destined for HTML output. It handles sequences of text characters, shifts (offsets), and state changes (like font or color) within a line. The class includes methods for appending Unicode characters, offsets, and state changes, as well as functions to optimize the line structure and dump the final HTML. It defines a nested `State` struct to manage CSS-related properties and an `Offset` struct for positioning, utilizing a `Param` object and `AllStateManager` for context.",
+      "total_lines": 135
+    },
+    {
+      "complexity": "medium",
+      "file_path": "src/HTMLTextPage.cc",
+      "language": "text",
+      "name": "HTMLTextPage.cc",
+      "purpose": "To implement the conversion and optimization of PDF text structures into HTML output.",
+      "summary": "HTMLTextPage.cc implements the core logic for converting PDF page text into optimized HTML. It handles the optimization of text lines, grouping them, and managing clipping regions to ensure correct visual output. The dump_text method orchestrates the generation of HTML divs for clips and spans for text lines. It also includes placeholders for CSS dumping and further text optimization algorithms.",
+      "total_lines": 148
+    },
+    {
+      "complexity": "medium",
+      "file_path": "src/HTMLTextPage.h",
+      "language": "c",
+      "name": "HTMLTextPage.h",
+      "purpose": "To aggregate, optimize, and output text lines for a single PDF page as HTML.",
+      "summary": "HTMLTextPage.h defines a class responsible for storing and optimizing a page of text converted from PDF format. It maintains a collection of HTMLTextLine objects and handles clipping regions to ensure text is rendered correctly within specific page boundaries. The class provides methods to dump the text and CSS to output streams, facilitating the generation of the final HTML representation. It coordinates with a state manager to handle text and clipping states efficiently.",
+      "total_lines": 67
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/Param.h",
+      "language": "c",
+      "name": "Param.h",
+      "purpose": "To define the data structure holding all configuration parameters for the PDF conversion process.",
+      "summary": "Param.h defines a comprehensive configuration structure used to pass settings throughout the PDF to HTML conversion application. It aggregates parameters related to page ranges, rendering dimensions (DPI, zoom), output options (embedding CSS, fonts, images), font processing settings (format, hinting), text layout adjustments, background rendering, and encryption credentials. This struct acts as the primary vehicle for configuration injection into the various subsystems of the application.",
+      "total_lines": 94
+    },
+    {
+      "complexity": "medium",
+      "file_path": "src/pdf2htmlEX.cc",
+      "language": "text",
+      "name": "pdf2htmlEX.cc",
+      "purpose": "Provides the main application entry point, parses command-line arguments, configures global parameters, and initiates the PDF to HTML conversion process.",
+      "summary": "This file serves as the main entry point for the pdf2htmlEX application, orchestrating the conversion of PDF documents to HTML. It initializes global parameters, parses command-line arguments using an `ArgParser`, and sets up necessary directories and configurations. The code includes functions to display usage and version information, handling dependencies like Poppler, Cairo, and Fontforge. It manages the overall workflow, including embedding options (CSS, fonts, images), page ranges, and rendering settings, before delegating the actual conversion to the `HTMLRenderer`.",
+      "total_lines": 475
+    },
+    {
+      "complexity": "medium",
+      "file_path": "src/Preprocessor.cc",
+      "language": "text",
+      "name": "Preprocessor.cc",
+      "purpose": "To scan PDF documents and map font usage to specific character codes for optimization purposes.",
+      "summary": "Preprocessor.cc implements a pre-analysis phase for PDF to HTML conversion, specifically designed to scan document pages and track which character codes are used for each font. It inherits from OutputDev, suggesting it hooks into the PDF rendering library (likely Poppler) to intercept drawing operations. The class maintains a map of font IDs to character code bitmaps, allowing the system to optimize font subsetting by identifying exactly which glyphs are needed. It also calculates the maximum page dimensions encountered during the scan.",
+      "total_lines": 110
+    },
+    {
+      "complexity": "medium",
+      "file_path": "src/Preprocessor.h",
+      "language": "c",
+      "name": "Preprocessor.h",
+      "purpose": "To perform a preliminary scan of PDF documents to collect metadata (font usage, dimensions, links) required for the rendering process.",
+      "summary": "The file defines a Preprocessor class that inherits from Poppler's OutputDev to perform a preliminary scan of PDF documents. It addresses the complexity of PDF structures by requiring a two-pass scan to collect font codes and link destinations. The class overrides specific virtual methods to track document state and dimensions, ensuring that the rendering engine has all necessary metadata upfront. Key design decisions include disabling text interpretation for Type 3 fonts and enforcing clipping to the crop box.",
+      "total_lines": 67
+    },
+    {
+      "complexity": "high",
+      "file_path": "src/StateManager.h",
+      "language": "c",
+      "name": "StateManager.h",
+      "purpose": "Centralizes the management of CSS style states, ensuring unique class generation for distinct property values to optimize the final HTML/CSS output.",
+      "summary": "This header defines a set of template classes and specific managers for handling CSS state generation. The `StateManager` template provides a generic mechanism to install values, assign them unique IDs, and generate corresponding CSS rules. Specializations exist for `double` (with epsilon comparison), `Matrix` (for transforms), and `Color` (with hashing). Concrete managers like `FontSizeManager`, `ColorManager`, and `TransformMatrixManager` inherit from these templates to handle specific CSS properties, defining how values are dumped to CSS streams. This system ensures that duplicate style values are not repeated in the output, reducing file size.",
+      "total_lines": 442
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/StringFormatter.cc",
+      "language": "text",
+      "name": "StringFormatter.cc",
+      "purpose": "To format strings into a dynamically sized internal buffer using printf-style syntax.",
+      "summary": "This file implements the StringFormatter's function call operator, which acts as a variadic printf-style formatter. It manages an internal buffer, dynamically resizing it if the formatted string exceeds the current capacity. The implementation uses vsnprintf to ensure safety against buffer overflows. It returns a GuardedPointer object, likely to manage the lifetime or access to the formatted string buffer.",
+      "total_lines": 31
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/StringFormatter.h",
+      "language": "c",
+      "name": "StringFormatter.h",
+      "purpose": "To efficiently format strings using a reusable buffer.",
+      "summary": "This header defines a string formatter class that wraps a single reusable buffer for C-style string formatting operations. It uses a guard pointer pattern to manage the lifecycle of the buffer pointer, ensuring safe access while the string is being used. The design optimizes performance by reserving buffer space and reusing it across multiple formatting calls.",
+      "total_lines": 44
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/TmpFiles.cc",
+      "language": "text",
+      "name": "TmpFiles.cc",
+      "purpose": "To provide the implementation logic for tracking, calculating size, and deleting temporary files.",
+      "summary": "This source file implements the TmpFiles class methods defined in the header. It handles the actual file system interactions, including adding files to the tracking set, calculating their total size using stat, and removing them upon cleanup. The implementation respects the 'clean_tmp' flag from the Param object, skipping operations if cleanup is disabled. It also includes conditional compilation for Windows (MINGW32) support.",
+      "total_lines": 78
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/TmpFiles.h",
+      "language": "c",
+      "name": "TmpFiles.h",
+      "purpose": "To track and manage the cleanup of temporary files created during the application process.",
+      "summary": "This header file defines the TmpFiles class, which acts as a registry for temporary files generated by the application. It holds references to these files and ensures they are cleaned up when the object is destroyed, depending on configuration parameters. The class interfaces with a Param object to determine behavior regarding cleaning and debug logging. It provides methods to add files to the registry and calculate the total disk space used.",
+      "total_lines": 29
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/util/const.cc",
+      "language": "text",
+      "name": "const.cc",
+      "purpose": "To define global constant mappings for font names, embedding strategies, and MIME types.",
+      "summary": "This file defines global constant data structures essential for the application's configuration. It includes mappings for GB encoded font names to standard names, strategies for embedding different file types (CSS, JS, PNG) into HTML versus linking them, and MIME type associations for various font and image formats. By centralizing these constants, the code avoids magic strings and facilitates consistent configuration management across the rendering pipeline.",
+      "total_lines": 54
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/util/const.h",
+      "language": "c",
+      "name": "const.h",
+      "purpose": "To centralize global constants, mappings, and configuration structures used throughout the PDF to HTML conversion process.",
+      "summary": "const.h defines a collection of global constants and mappings essential for the application's configuration and operation. It includes default DPI values, matrix definitions, and maps for handling font encodings and file embedding strategies. The file also structures how external resources like fonts and files are embedded into the output HTML versus linked externally. This centralizes configuration data to avoid magic numbers and strings throughout the codebase.",
+      "total_lines": 47
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/util/encoding.cc",
+      "language": "text",
+      "name": "encoding.cc",
+      "purpose": "Handles text encoding (UTF-8) and escaping for HTML, JSON, and attribute output.",
+      "summary": "This file manages text encoding and escaping logic required for safely rendering PDF content into HTML and JSON formats. It includes a UTF-8 mapping function to convert Unicode characters to byte sequences and provides stream writers that escape special characters (like `\u0026`, `\u003c`, `\u003e`) into HTML entities. It also features specific escaping functions for JSON strings and HTML attributes, including handling for backticks to prevent specific browser vulnerabilities. These functions are critical for preventing injection attacks and ensuring valid output syntax.",
+      "total_lines": 195
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/util/encoding.h",
+      "language": "c",
+      "name": "encoding.h",
+      "purpose": "To declare utility functions for text encoding and escaping in various output formats.",
+      "summary": "This header file defines a set of utility functions within the pdf2htmlEX namespace for encoding and escaping text output. It includes functions to write Unicode characters to streams, escape strings for JSON compatibility, and escape strings for use within HTML tag attributes. The functions rely on C++ standard library streams and internal types for character representation.",
+      "total_lines": 44
+    },
+    {
+      "complexity": "high",
+      "file_path": "src/util/ffw.c",
+      "language": "c",
+      "name": "ffw.c",
+      "purpose": "To implement the FontForge wrapper functionality for font processing tasks.",
+      "summary": "This file implements the FontForge wrapper functions declared in ffw.h. It manages the internal state of the FontForge library, including initialization, finalization, and font view management. The implementation includes specific logic to clean up fonts for web usage, such as removing kerning, alternate unicodes, and malformed font names, as well as handling CID font metric consistency.",
+      "total_lines": 580
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/util/ffw.h",
+      "language": "c",
+      "name": "ffw.h",
+      "purpose": "To declare a C API for wrapping FontForge functionality for font processing.",
+      "summary": "This header file defines the interface for a C wrapper around the FontForge library, enabling C++ code to utilize FontForge's font manipulation capabilities. It declares functions for initializing the library, loading and saving fonts, modifying encodings (including raw mappings), adjusting font metrics, and importing SVG glyphs. The use of 'extern \"C\"' ensures C linkage to prevent name mangling.",
+      "total_lines": 80
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/util/math.cc",
+      "language": "text",
+      "name": "math.cc",
+      "purpose": "To perform affine transformations and bounding box calculations for the rendering pipeline.",
+      "summary": "This file implements low-level geometric transformations and bounding box calculations required for rendering PDF content. It handles transformation matrix operations (multiplication and point transformation) and bounding box manipulation (transformation and intersection). The logic is fundamental for mapping PDF coordinate systems to HTML/Canvas coordinates.",
+      "total_lines": 91
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/util/math.h",
+      "language": "c",
+      "name": "math.h",
+      "purpose": "To centralize mathematical logic for tolerance-based comparisons and matrix transformations.",
+      "summary": "This header file defines static inline utility functions for common mathematical operations required by the rendering engine. It focuses on robust floating-point comparisons using an epsilon threshold (`EPS`) and manipulations of 2D affine transformation matrices represented as 6-element double arrays. It includes declarations for more complex geometric operations like bounding box intersection and transformation.",
+      "total_lines": 60
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/util/mingw.cc",
+      "language": "text",
+      "name": "mingw.cc",
+      "purpose": "Provides Windows/MinGW-specific implementations for file system and path utilities.",
+      "summary": "This file implements Windows-specific compatibility functions for the MinGW environment, abstracting differences between Unix and Windows file systems. It provides a custom implementation of `mkdtemp` for creating temporary directories, which is standard on Unix but requires manual implementation on Windows using `mktemp` and `_mkdir`. It also defines `get_exec_dir` and `get_tmp_dir` to locate application data and temporary directories by inspecting Windows environment variables and executable paths. These functions allow the main application code to remain platform-agnostic.",
+      "total_lines": 65
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/util/mingw.h",
+      "language": "c",
+      "name": "mingw.h",
+      "purpose": "To ensure cross-platform compatibility by abstracting Windows-specific file system behaviors.",
+      "summary": "This header file addresses platform-specific differences when compiling on Windows with MinGW. It provides prototypes for POSIX functions missing on Windows, such as mkdtemp, and redefines standard functions like mkdir and stat to their Windows-specific underscore-prefixed equivalents. It also declares utility functions for locating the executable and temporary directories.",
+      "total_lines": 30
+    },
+    {
+      "complexity": "medium",
+      "file_path": "src/util/misc.cc",
+      "language": "text",
+      "name": "misc.cc",
+      "purpose": "Provides miscellaneous helper functions for CSS geometry calculations and color formatting.",
+      "summary": "This implementation file contains miscellaneous utility functions essential for the rendering process. It implements `css_fix_rectangle_border_width`, a function that adjusts rectangle dimensions and border widths to ensure CSS rendering rules are met, particularly handling cases where borders are thicker than the rectangle itself. Additionally, it overloads the stream output operator for the `GfxRGB` type to convert color objects into standard CSS `rgb()` string format. These utilities ensure visual fidelity and correct data formatting when generating output.",
+      "total_lines": 67
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/util/misc.h",
+      "language": "c",
+      "name": "misc.h",
+      "purpose": "To provide miscellaneous helper functions for PDF reference hashing, CSS border adjustment, and color output formatting.",
+      "summary": "This header file provides utility functions and helpers for PDF to HTML conversion, specifically addressing coordinate system differences and data representation. It includes a hashing mechanism for PDF references and a helper to adjust border widths between PDF and CSS models. It also defines stream output formatting for RGB color objects.",
+      "total_lines": 40
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/util/namespace.h",
+      "language": "c",
+      "name": "namespace.h",
+      "purpose": "To import standard C++ library symbols into the current namespace to reduce verbosity in other source files.",
+      "summary": "This header file defines a set of `using` declarations for frequently used standard C++ library components, such as I/O streams and string manipulators. It acts as a convenience layer to reduce boilerplate code by allowing other files to use standard types like `std::string` or `std::ifstream` without the `std::` prefix. The design decision reflects a specific coding style preference for brevity within the `pdf2htmlEX` project.",
+      "total_lines": 22
+    },
+    {
+      "complexity": "medium",
+      "file_path": "src/util/path.cc",
+      "language": "text",
+      "name": "path.cc",
+      "purpose": "To provide helper functions for file path manipulation, directory creation, and filename sanitization.",
+      "summary": "This source file implements utility functions for manipulating file paths and managing the file system within the `pdf2htmlEX` namespace. It includes logic to recursively create directories, sanitize filenames by escaping format specifiers to prevent injection attacks, and identify specific file types like TrueType fonts. The implementation relies on POSIX system calls wrapped in C++ error handling logic.",
+      "total_lines": 142
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/util/path.h",
+      "language": "c",
+      "name": "path.h",
+      "purpose": "Provides utility functions for file path manipulation, directory creation, and filename sanitization.",
+      "summary": "This header file defines a suite of utility functions within the `pdf2htmlEX` namespace dedicated to file path and filename management. It includes functionality to create directories, extract filenames and suffixes from paths, and specifically identify TrueType font suffixes. A key feature is the `sanitize_filename` function, which handles format specifiers in filenames to ensure safe usage. The design relies on standard C++ strings to provide cross-platform path operations.",
+      "total_lines": 34
+    },
+    {
+      "complexity": "medium",
+      "file_path": "src/util/SignalHandler.cc",
+      "language": "text",
+      "name": "SignalHandler.cc",
+      "purpose": "To handle fatal application signals by logging diagnostic details and exiting gracefully.",
+      "summary": "This file implements a portable signal handler for critical errors (SIGSEGV, SIGFPE, etc.) designed to provide diagnostic information when the application crashes, particularly focusing on issues related to the FontForge library. It uses low-level I/O operations to ensure safety during re-entrant crash conditions and constructs detailed error messages containing version information, command-line arguments, and system paths. The code distinguishes between Windows and POSIX environments for signal registration and output methods.",
+      "total_lines": 257
+    },
+    {
+      "complexity": "low",
+      "file_path": "src/util/SignalHandler.h",
+      "language": "c",
+      "name": "SignalHandler.h",
+      "purpose": "Manages system signal handling and application lifecycle actions.",
+      "summary": "This header file declares the interface for setting up and managing signal handlers within the application. It exposes C-linkage functions `ffwSetAction` and `ffwClearAction` for setting and clearing specific actions, likely intended for interoperability or external callbacks. The primary function `setupSignalHandler` initializes the signal handling mechanism, passing in command-line arguments and critical directory paths (data, poppler data, temp) to the handler context. This module serves as a bridge between the application logic and OS-level signals.",
+      "total_lines": 22
+    },
+    {
+      "complexity": "medium",
+      "file_path": "src/util/unicode.cc",
+      "language": "text",
+      "name": "unicode.cc",
+      "purpose": "To map PDF character codes to safe Unicode values, avoiding conflicts with system fonts like emoji.",
+      "summary": "This file implements logic for converting PDF character codes into valid Unicode strings. It specifically addresses issues with mobile Safari's emoji font usage by mapping characters to specific Private Use Area (PUA) ranges. The code attempts to resolve character names from fonts first, falling back to private mapping strategies that avoid conflicting with emoji code points (0xE000-0xE5FF).",
+      "total_lines": 73
+    },
+    {
+      "complexity": "high",
+      "file_path": "src/util/unicode.h",
+      "language": "c",
+      "name": "unicode.h",
+      "purpose": "To validate and transform Unicode characters from PDF sources into safe HTML-compatible representations.",
+      "summary": "unicode.h provides utility functions for validating and mapping Unicode characters derived from PDF fonts. It specifically identifies characters that are illegal or problematic in HTML contexts (e.g., control characters, bidirectional controls) and maps them to private use areas to prevent rendering issues. The file includes logic to extract Unicode values directly from font data and handle ligature expansions. This ensures that the generated HTML text maintains visual fidelity with the original PDF while avoiding browser-specific rendering quirks.",
+      "total_lines": 92
+    },
+    {
+      "complexity": "low",
+      "file_path": "test/browser_tests/basic_text/basic_text.html",
+      "language": "html",
+      "name": "basic_text.html",
+      "purpose": "To provide a test fixture for validating the HTML and CSS output of basic text rendering from PDF conversion.",
+      "summary": "This HTML file is a generated output from the pdf2htmlEX tool, representing a converted PDF document containing basic text. It embeds the entire base CSS framework required for rendering the PDF pages in a browser, including styles for page containers, text layers, and font definitions. The file includes embedded font data (WOFF format) to ensure visual fidelity without external dependencies. It serves as a regression test to verify that text rendering, font loading, and basic layout transformations function correctly.",
+      "total_lines": 108
+    },
+    {
+      "complexity": "medium",
+      "file_path": "test/browser_tests/fontfile3_opentype/fontfile3_opentype.html",
+      "language": "html",
+      "name": "fontfile3_opentype.html",
+      "purpose": "To validate the correct rendering of OpenType fonts converted from PDF to HTML.",
+      "summary": "This HTML file is a generated test case designed to verify the rendering of OpenType fonts within the pdf2htmlEX output. It utilizes a standard CSS framework for layout and embeds specific font data via Base64 to test font loading and character display capabilities.",
+      "total_lines": 161
+    },
+    {
+      "complexity": "low",
+      "file_path": "test/browser_tests/geneve_1564/geneve_1564.html",
+      "language": "html",
+      "name": "geneve_1564.html",
+      "purpose": "To provide a test fixture for validating PDF to HTML conversion for a specific document containing custom fonts.",
+      "summary": "This HTML file is a generated output from the pdf2htmlEX tool for a specific test case named 'geneve_1564'. It contains the standard boilerplate CSS for page layout, text positioning, and print styles. The file embeds custom font definitions (ff1, ff2) using base64 encoded WOFF data, indicating a reliance on specific typefaces for accurate rendering. It serves as a regression test to ensure the conversion process handles font embedding and character mapping correctly for this specific document.",
+      "total_lines": 739
+    },
+    {
+      "complexity": "medium",
+      "file_path": "test/browser_tests/invalid_unicode_issue477/invalid_unicode_issue477.html",
+      "language": "html",
+      "name": "invalid_unicode_issue477.html",
+      "purpose": "To verify that the rendering engine correctly handles and displays invalid Unicode characters.",
+      "summary": "This HTML file acts as a regression test for handling invalid Unicode characters during the PDF to HTML conversion process. It includes the standard layout CSS and embedded fonts required to render the problematic characters, ensuring the engine can handle edge cases in text encoding.",
+      "total_lines": 159
+    },
+    {
+      "complexity": "medium",
+      "file_path": "test/browser_tests.py",
+      "language": "python",
+      "name": "browser_tests.py",
+      "purpose": "To perform visual regression testing by comparing rendered HTML output against known good reference images.",
+      "summary": "This script provides a base test class for performing visual regression tests on PDF-to-HTML conversions. It handles the conversion of PDFs to HTML (either by executing the tool or using pre-compiled files), rendering the HTML in a browser, capturing screenshots, and comparing them against reference images using pixel difference analysis. It includes logic for generating new reference images and reporting differences.",
+      "total_lines": 138
+    },
+    {
+      "complexity": "low",
+      "file_path": "test/browser_tests/svg_background_with_page_rotation_issue402/svg_background_with_page_rotation_issue402.html",
+      "language": "html",
+      "name": "svg_background_with_page_rotation_issue402.html",
+      "purpose": "To test and validate the rendering of SVG backgrounds and page rotation in converted PDF documents.",
+      "summary": "This HTML file is a generated output from pdf2htmlEX, specifically targeting issue #402 related to SVG backgrounds and page rotation. It includes the core CSS framework for page rendering, utilizing absolute positioning and transforms to manage layout. The file defines font faces (ff1, ff2) with embedded base64 data, ensuring the document renders with the correct typography. It validates that the rendering engine correctly preserves the visual orientation and background elements when converting rotated PDF pages to HTML.",
+      "total_lines": 643
+    },
+    {
+      "complexity": "medium",
+      "file_path": "test/browser_tests/text_visibility/text_visibility.html",
+      "language": "html",
+      "name": "text_visibility.html",
+      "purpose": "To provide a visual reference for testing the visibility and clipping of text elements in the HTML rendering engine.",
+      "summary": "This HTML file is a generated test case for the pdf2htmlEX rendering engine, specifically targeting text visibility. It contains inline CSS defining the layout structure, including absolute positioning for pages and text layers, and embeds font data directly as Base64 strings to ensure rendering consistency without external dependencies.",
+      "total_lines": 154
+    },
+    {
+      "complexity": "medium",
+      "file_path": "test/browser_tests/with_form/with_form.html",
+      "language": "html",
+      "name": "with_form.html",
+      "purpose": "To validate the correct rendering and positioning of form elements converted from PDF.",
+      "summary": "This HTML file is a generated test case for the rendering of PDF forms within the pdf2htmlEX output. It utilizes the standard CSS layout framework and embedded fonts to ensure that form elements are positioned and styled correctly relative to the document content.",
+      "total_lines": 217
+    },
+    {
+      "complexity": "low",
+      "file_path": "test/fancy.min.css",
+      "language": "css",
+      "name": "fancy.min.css",
+      "purpose": "To enforce specific layout constraints on the page container during visual testing.",
+      "summary": "This CSS file defines a specific style rule for the element with the ID 'page-container'. It sets the overflow property to hidden, which is likely used to prevent scrollbars from appearing during screenshot capture in the visual regression tests, ensuring pixel-perfect comparison.",
+      "total_lines": 5
+    },
+    {
+      "complexity": "low",
+      "file_path": "test/old/test.py",
+      "language": "python",
+      "name": "test.py",
+      "purpose": "To batch convert PDF files to HTML and generate an index page for manual verification of the conversion results.",
+      "summary": "This Python script automates the testing of the pdf2htmlEX conversion tool by iterating through all PDF files in a specified directory. It executes the `pdf2htmlEX` command-line tool with specific arguments (fit-width, DRM handling, external hinting) for each file and generates an index HTML file containing links to the converted outputs. The script handles errors by exiting immediately if a conversion fails, ensuring that issues are caught early. It serves as an integration test suite to verify the tool's stability across multiple inputs.",
+      "total_lines": 25
+    },
+    {
+      "complexity": "low",
+      "file_path": "test/README.md",
+      "language": "markdown",
+      "name": "README.md",
+      "purpose": "To document the testing procedures, dependencies, and tools required to verify the correctness of PDF to HTML conversion.",
+      "summary": "This file provides comprehensive documentation for the testing suite of the pdf2htmlEX application. It describes the setup and execution of Python unittests, including local and browser-based visual regression tests using Selenium and Pillow. The document details the usage of shell scripts for automation, handling test failures, and managing reference HTML generation.",
+      "total_lines": 125
+    },
+    {
+      "complexity": "low",
+      "file_path": "test/test_local_browser.py",
+      "language": "python",
+      "name": "test_local_browser.py",
+      "purpose": "To execute visual regression tests using a local Firefox browser instance.",
+      "summary": "This script implements the test suite for running visual regression tests locally using Firefox. It extends the BrowserTests base class by providing the specific setup and teardown logic for a local Selenium WebDriver. The 'generate_image' method is implemented to load HTML files via the file:// protocol and capture screenshots, ensuring the browser window meets specific size requirements before testing.",
+      "total_lines": 50
+    },
+    {
+      "complexity": "low",
+      "file_path": "test/test_output.py",
+      "language": "python",
+      "name": "test_output.py",
+      "purpose": "To validate the file generation and naming logic of the pdf2htmlEX conversion process.",
+      "summary": "This script contains a suite of unit tests designed to verify that the pdf2htmlEX application executes successfully and generates the expected output files. It tests various scenarios including single-page and multi-page PDFs, default naming conventions, user-specified filenames, and the 'split pages' feature with custom formatting. The tests focus on file existence and naming rather than the visual content of the output.",
+      "total_lines": 102
+    },
+    {
+      "complexity": "medium",
+      "file_path": "test/test_remote_browser.py",
+      "language": "python",
+      "name": "test_remote_browser.py",
+      "purpose": "To orchestrate and execute PDF rendering tests across multiple remote browser environments via Sauce Labs.",
+      "summary": "This script configures and executes browser tests using the Sauce Labs remote browser service. It defines a matrix of browser configurations (OS, browser type, version) and dynamically generates test classes for each combination. The script handles Sauce Labs authentication via environment variables, sets up remote WebDriver instances, and reports test results (pass/fail status, build numbers, tags) back to the Sauce Labs service upon completion.",
+      "total_lines": 139
+    }
+  ],
+  "initiative_id": 11,
+  "initiative_name": "Transform: pdf2htmlEX → Oxidized Document Engine (ODE)",
+  "source_architecture_id": 37,
+  "synced_at": "2026-02-18T16:28:46+02:00",
+  "synced_files": 74,
+  "target_architecture_id": 40,
+  "total_files": 74,
+  "transform_items": [
+    {
+      "approach": "rewrite",
+      "id": 6,
+      "name": "External Dependencies",
+      "priority": "medium",
+      "status": "in_progress"
+    },
+    {
+      "approach": "rewrite",
+      "id": 7,
+      "name": "Background Rendering Engine",
+      "priority": "medium",
+      "status": "in_progress"
+    },
+    {
+      "approach": "rewrite",
+      "id": 8,
+      "name": "HTML Rendering Engine",
+      "priority": "medium",
+      "status": "in_progress"
+    },
+    {
+      "approach": "rewrite",
+      "id": 9,
+      "name": "Main Application Logic",
+      "priority": "medium",
+      "status": "in_progress"
+    },
+    {
+      "approach": "rewrite",
+      "id": 10,
+      "name": "Core Utilities",
+      "priority": "medium",
+      "status": "in_progress"
+    }
+  ]
+}

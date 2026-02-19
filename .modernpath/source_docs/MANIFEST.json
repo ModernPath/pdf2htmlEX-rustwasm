@@ -1,0 +1,529 @@
+{
+  "documents": [
+    {
+      "ID": "8ecec73a-0222-4d4d-9878-b4eb7d5137eb",
+      "Title": "Architecture Patterns",
+      "Tier": "instructions",
+      "Angle": "architecture",
+      "Summary": "Architectural patterns and design principles for pdf2htmlEX pdf2htmlEX",
+      "FilePath": "other/Architecture-Patterns.md"
+    },
+    {
+      "ID": "fae98275-2edc-4799-b762-169109e9d28c",
+      "Title": "Code Style Patterns",
+      "Tier": "instructions",
+      "Angle": "style",
+      "Summary": "Code style and formatting patterns for pdf2htmlEX pdf2htmlEX",
+      "FilePath": "other/Code-Style-Patterns.md"
+    },
+    {
+      "ID": "9f001c17-4204-4284-8c70-37ff05ad8f02",
+      "Title": "File Organization Rules",
+      "Tier": "instructions",
+      "Angle": "patterns",
+      "Summary": "File and directory organization rules for pdf2htmlEX pdf2htmlEX",
+      "FilePath": "other/File-Organization-Rules.md"
+    },
+    {
+      "ID": "59520a65-59ba-4953-9acb-ebb204a88e31",
+      "Title": "Language Conventions: cpp",
+      "Tier": "instructions",
+      "Angle": "conventions",
+      "Summary": "Language-specific coding conventions for cpp in pdf2htmlEX pdf2htmlEX",
+      "FilePath": "other/Language-Conventions-cpp.md"
+    },
+    {
+      "ID": "94948d1b-679f-40f8-97f6-a7a18a8d112e",
+      "Title": "Testing Conventions",
+      "Tier": "instructions",
+      "Angle": "testing",
+      "Summary": "Testing patterns and conventions for pdf2htmlEX pdf2htmlEX",
+      "FilePath": "other/Testing-Conventions.md"
+    },
+    {
+      "ID": "a9573899-4b7d-4990-85cf-e1c7e2617933",
+      "Title": "Code Structure: pdf2htmlEX pdf2htmlEX",
+      "Tier": "architecture",
+      "Angle": "code_structure",
+      "Summary": "# Code Structure Documentation: pdf2htmlEX pdf2htmlEX",
+      "FilePath": "architecture/Code-Structure-pdf2htmlEX-pdf2htmlEX.md"
+    },
+    {
+      "ID": "fafbae15-eb2f-47b6-afa2-cc47a43e6e2d",
+      "Title": "Data Models: pdf2htmlEX pdf2htmlEX",
+      "Tier": "architecture",
+      "Angle": "data_models",
+      "Summary": "# Data Models Documentation: pdf2htmlEX",
+      "FilePath": "architecture/Data-Models-pdf2htmlEX-pdf2htmlEX.md"
+    },
+    {
+      "ID": "d5e5c627-0552-4713-adbd-9d8eb3ab8474",
+      "Title": "Interfaces: pdf2htmlEX pdf2htmlEX",
+      "Tier": "architecture",
+      "Angle": "interfaces",
+      "Summary": "# Interfaces Documentation for pdf2htmlEX",
+      "FilePath": "architecture/Interfaces-pdf2htmlEX-pdf2htmlEX.md"
+    },
+    {
+      "ID": "1651ba59-a008-4fae-92fe-5e890c9a53bd",
+      "Title": "Overview: pdf2htmlEX pdf2htmlEX",
+      "Tier": "architecture",
+      "Angle": "overview",
+      "Summary": "# Architecture Overview: pdf2htmlEX",
+      "FilePath": "architecture/Overview-pdf2htmlEX-pdf2htmlEX.md"
+    },
+    {
+      "ID": "8cbf8081-3080-4097-be80-7e5ccab1f659",
+      "Title": "Use Cases: pdf2htmlEX pdf2htmlEX",
+      "Tier": "architecture",
+      "Angle": "use_cases",
+      "Summary": "# Use Cases Documentation: pdf2htmlEX pdf2htmlEX",
+      "FilePath": "architecture/Use-Cases-pdf2htmlEX-pdf2htmlEX.md"
+    },
+    {
+      "ID": "d871d7d5-fc49-43e0-98bf-787c5ccd6e74",
+      "Title": "Code Structure: Background Rendering Engine",
+      "Tier": "subsystem",
+      "Angle": "code_structure",
+      "Summary": "# Code Structure Documentation: Background Rendering Engine",
+      "FilePath": "subsystem/Code-Structure-Background-Rendering-Engine.md"
+    },
+    {
+      "ID": "4da56397-e5ac-4769-907f-f27ca7d6c0f6",
+      "Title": "Code Structure: Core Utilities",
+      "Tier": "subsystem",
+      "Angle": "code_structure",
+      "Summary": "# Core Utilities: Code Structure Documentation",
+      "FilePath": "subsystem/Code-Structure-Core-Utilities.md"
+    },
+    {
+      "ID": "a45c0a47-4234-4c09-b049-0d77249bd9ba",
+      "Title": "Code Structure: External Dependencies",
+      "Tier": "subsystem",
+      "Angle": "code_structure",
+      "Summary": "# External Dependencies: Code Structure Documentation",
+      "FilePath": "subsystem/Code-Structure-External-Dependencies.md"
+    },
+    {
+      "ID": "457b563c-281c-412a-9bac-099a198fe84f",
+      "Title": "Code Structure: HTML Rendering Engine",
+      "Tier": "subsystem",
+      "Angle": "code_structure",
+      "Summary": "# HTML Rendering Engine: Code Structure Documentation",
+      "FilePath": "subsystem/Code-Structure-HTML-Rendering-Engine.md"
+    },
+    {
+      "ID": "7c7fb0dc-b624-47ab-9654-ba71791ef87c",
+      "Title": "Code Structure: Main Application Logic",
+      "Tier": "subsystem",
+      "Angle": "code_structure",
+      "Summary": "# Code Structure Documentation: Main Application Logic",
+      "FilePath": "subsystem/Code-Structure-Main-Application-Logic.md"
+    },
+    {
+      "ID": "2c271839-a41a-40f9-baf9-1358eac67a2a",
+      "Title": "Code Structure: Other",
+      "Tier": "subsystem",
+      "Angle": "code_structure",
+      "Summary": "# Code Structure Documentation: Other",
+      "FilePath": "subsystem/Code-Structure-Other.md"
+    },
+    {
+      "ID": "8ac7ad17-50e0-442f-8655-8dd34a49a4b0",
+      "Title": "Data Models: Background Rendering Engine",
+      "Tier": "subsystem",
+      "Angle": "data_models",
+      "Summary": "# Data Models Documentation: Background Rendering Engine",
+      "FilePath": "subsystem/Data-Models-Background-Rendering-Engine.md"
+    },
+    {
+      "ID": "ce37c90c-3202-4987-b981-5d903e3d4bb7",
+      "Title": "Data Models: Core Utilities",
+      "Tier": "subsystem",
+      "Angle": "data_models",
+      "Summary": "# Data Models Documentation: Core Utilities",
+      "FilePath": "subsystem/Data-Models-Core-Utilities.md"
+    },
+    {
+      "ID": "0b6c5947-8719-417c-ba1a-4ae06a703267",
+      "Title": "Data Models: External Dependencies",
+      "Tier": "subsystem",
+      "Angle": "data_models",
+      "Summary": "# External Dependencies: Data Models Documentation",
+      "FilePath": "subsystem/Data-Models-External-Dependencies.md"
+    },
+    {
+      "ID": "7cf80078-e5d2-4472-a46a-944aa419a029",
+      "Title": "Data Models: HTML Rendering Engine",
+      "Tier": "subsystem",
+      "Angle": "data_models",
+      "Summary": "# HTML Rendering Engine - Data Models Documentation",
+      "FilePath": "subsystem/Data-Models-HTML-Rendering-Engine.md"
+    },
+    {
+      "ID": "480bb555-4e19-4d9d-b25c-3e3c1fce640b",
+      "Title": "Data Models: Main Application Logic",
+      "Tier": "subsystem",
+      "Angle": "data_models",
+      "Summary": "# Data Models Documentation: Main Application Logic",
+      "FilePath": "subsystem/Data-Models-Main-Application-Logic.md"
+    },
+    {
+      "ID": "97aa737d-10f4-4dee-825b-c85c3384efe3",
+      "Title": "Data Models: Other",
+      "Tier": "subsystem",
+      "Angle": "data_models",
+      "Summary": "# Data Models Documentation: Other",
+      "FilePath": "subsystem/Data-Models-Other.md"
+    },
+    {
+      "ID": "70cd0efc-bde4-4bf3-bc2e-8c2d2be7fead",
+      "Title": "Interfaces: Background Rendering Engine",
+      "Tier": "subsystem",
+      "Angle": "interfaces",
+      "Summary": "# Background Rendering Engine: Interfaces Documentation",
+      "FilePath": "subsystem/Interfaces-Background-Rendering-Engine.md"
+    },
+    {
+      "ID": "3c33b4bb-19a0-4561-884e-344864c882db",
+      "Title": "Interfaces: Core Utilities",
+      "Tier": "subsystem",
+      "Angle": "interfaces",
+      "Summary": "# Core Utilities: Interfaces Documentation",
+      "FilePath": "subsystem/Interfaces-Core-Utilities.md"
+    },
+    {
+      "ID": "ef38c249-56fa-4a69-98d5-92dcc2fddea6",
+      "Title": "Interfaces: External Dependencies",
+      "Tier": "subsystem",
+      "Angle": "interfaces",
+      "Summary": "# External Dependencies: Interfaces Documentation",
+      "FilePath": "subsystem/Interfaces-External-Dependencies.md"
+    },
+    {
+      "ID": "e4eafc30-57b5-4be7-951f-93ddacad7798",
+      "Title": "Interfaces: HTML Rendering Engine",
+      "Tier": "subsystem",
+      "Angle": "interfaces",
+      "Summary": "# HTML Rendering Engine: Interfaces Documentation",
+      "FilePath": "subsystem/Interfaces-HTML-Rendering-Engine.md"
+    },
+    {
+      "ID": "d9ed991d-d304-4b9f-885e-b955d8b53b56",
+      "Title": "Interfaces: Main Application Logic",
+      "Tier": "subsystem",
+      "Angle": "interfaces",
+      "Summary": "# Main Application Logic: Interfaces Documentation",
+      "FilePath": "subsystem/Interfaces-Main-Application-Logic.md"
+    },
+    {
+      "ID": "9f4a0665-6a14-418c-a019-6e8f0a275bd6",
+      "Title": "Interfaces: Other",
+      "Tier": "subsystem",
+      "Angle": "interfaces",
+      "Summary": "# Other Subsystem - Interfaces Documentation",
+      "FilePath": "subsystem/Interfaces-Other.md"
+    },
+    {
+      "ID": "d3dd19da-7b8b-4ee1-8bb7-0e78bf57da49",
+      "Title": "Overview: Background Rendering Engine",
+      "Tier": "subsystem",
+      "Angle": "overview",
+      "Summary": "# Background Rendering Engine: Executive Summary",
+      "FilePath": "subsystem/Overview-Background-Rendering-Engine.md"
+    },
+    {
+      "ID": "6687a9c8-300c-458f-b34e-417c40c59959",
+      "Title": "Overview: Core Utilities",
+      "Tier": "subsystem",
+      "Angle": "overview",
+      "Summary": "# Core Utilities Subsystem Overview",
+      "FilePath": "subsystem/Overview-Core-Utilities.md"
+    },
+    {
+      "ID": "1c3ee3d0-710a-4516-b91e-4649615e086f",
+      "Title": "Overview: External Dependencies",
+      "Tier": "subsystem",
+      "Angle": "overview",
+      "Summary": "# External Dependencies: Overview",
+      "FilePath": "subsystem/Overview-External-Dependencies.md"
+    },
+    {
+      "ID": "1a0866a1-cce2-4862-ace6-86f8f794401c",
+      "Title": "Overview: HTML Rendering Engine",
+      "Tier": "subsystem",
+      "Angle": "overview",
+      "Summary": "# HTML Rendering Engine: Executive Overview",
+      "FilePath": "subsystem/Overview-HTML-Rendering-Engine.md"
+    },
+    {
+      "ID": "6d4ca174-6774-4fab-835f-dccffc08f9e5",
+      "Title": "Overview: Main Application Logic",
+      "Tier": "subsystem",
+      "Angle": "overview",
+      "Summary": "# Main Application Logic: Executive Summary",
+      "FilePath": "subsystem/Overview-Main-Application-Logic.md"
+    },
+    {
+      "ID": "9203d22b-b0fe-48e7-bdbe-5c88308d418c",
+      "Title": "Overview: Other",
+      "Tier": "subsystem",
+      "Angle": "overview",
+      "Summary": "# Subsystem Overview: Other",
+      "FilePath": "subsystem/Overview-Other.md"
+    },
+    {
+      "ID": "da5afdc7-a2c0-4ed8-b7be-239049705a38",
+      "Title": "Use Cases: Background Rendering Engine",
+      "Tier": "subsystem",
+      "Angle": "use_cases",
+      "Summary": "# Use Cases Documentation: Background Rendering Engine",
+      "FilePath": "subsystem/Use-Cases-Background-Rendering-Engine.md"
+    },
+    {
+      "ID": "3d0bd930-52b7-437e-a0c0-81cd7a5636b3",
+      "Title": "Use Cases: Core Utilities",
+      "Tier": "subsystem",
+      "Angle": "use_cases",
+      "Summary": "# Use Cases Documentation: Core Utilities",
+      "FilePath": "subsystem/Use-Cases-Core-Utilities.md"
+    },
+    {
+      "ID": "34e22e78-c7af-456a-aa18-735bee50deb5",
+      "Title": "Use Cases: External Dependencies",
+      "Tier": "subsystem",
+      "Angle": "use_cases",
+      "Summary": "# Use Cases Documentation: External Dependencies",
+      "FilePath": "subsystem/Use-Cases-External-Dependencies.md"
+    },
+    {
+      "ID": "e9e54993-b2d9-4900-a0e8-0fb79a692647",
+      "Title": "Use Cases: HTML Rendering Engine",
+      "Tier": "subsystem",
+      "Angle": "use_cases",
+      "Summary": "# Use Cases Documentation: HTML Rendering Engine",
+      "FilePath": "subsystem/Use-Cases-HTML-Rendering-Engine.md"
+    },
+    {
+      "ID": "892c439e-b216-41fd-9d27-ac29301ab9e6",
+      "Title": "Use Cases: Main Application Logic",
+      "Tier": "subsystem",
+      "Angle": "use_cases",
+      "Summary": "# Use Cases Documentation: Main Application Logic",
+      "FilePath": "subsystem/Use-Cases-Main-Application-Logic.md"
+    },
+    {
+      "ID": "b2823c2d-b0e6-400c-8990-48c3b16d3eb8",
+      "Title": "Use Cases: Other",
+      "Tier": "subsystem",
+      "Angle": "use_cases",
+      "Summary": "# Use Cases Documentation: Subsystem Other",
+      "FilePath": "subsystem/Use-Cases-Other.md"
+    },
+    {
+      "ID": "7559155d-b0ab-4715-aa45-cfe3b19f242d",
+      "Title": "Code Structure: src",
+      "Tier": "module",
+      "Angle": "code_structure",
+      "Summary": "# Code Structure Documentation: `src`",
+      "FilePath": "module/Code-Structure-src.md"
+    },
+    {
+      "ID": "eaae9d0b-ddd5-4f8a-afab-93066738ad3f",
+      "Title": "Code Structure: src/BackgroundRenderer",
+      "Tier": "module",
+      "Angle": "code_structure",
+      "Summary": "# Code Structure Documentation: `src/BackgroundRenderer`",
+      "FilePath": "module/Code-Structure-srcBackgroundRenderer.md"
+    },
+    {
+      "ID": "b819ca80-0b85-4403-a539-6dd125b91bce",
+      "Title": "Code Structure: src/HTMLRenderer",
+      "Tier": "module",
+      "Angle": "code_structure",
+      "Summary": "# Code Structure Documentation: `src/HTMLRenderer`",
+      "FilePath": "module/Code-Structure-srcHTMLRenderer.md"
+    },
+    {
+      "ID": "8356d687-3a1e-4850-b9e9-d84843fcae19",
+      "Title": "Code Structure: src/util",
+      "Tier": "module",
+      "Angle": "code_structure",
+      "Summary": "# Code Structure Documentation: `src/util`",
+      "FilePath": "module/Code-Structure-srcutil.md"
+    },
+    {
+      "ID": "61007847-860c-4b10-a7c8-e4975491390d",
+      "Title": "Code Structure: test",
+      "Tier": "module",
+      "Angle": "code_structure",
+      "Summary": "# Code Structure Documentation: `test`",
+      "FilePath": "module/Code-Structure-test.md"
+    },
+    {
+      "ID": "0b039275-d142-4e51-8ca8-73a39d42034a",
+      "Title": "Data Models: src",
+      "Tier": "module",
+      "Angle": "data_models",
+      "Summary": "# Data Models Documentation",
+      "FilePath": "module/Data-Models-src.md"
+    },
+    {
+      "ID": "7e86e28a-9373-41bf-b7eb-7be3f60b6d22",
+      "Title": "Data Models: src/BackgroundRenderer",
+      "Tier": "module",
+      "Angle": "data_models",
+      "Summary": "# Data Models Documentation",
+      "FilePath": "module/Data-Models-srcBackgroundRenderer.md"
+    },
+    {
+      "ID": "9753d86f-ad74-4f1f-91a6-4b574ba81c66",
+      "Title": "Data Models: src/HTMLRenderer",
+      "Tier": "module",
+      "Angle": "data_models",
+      "Summary": "# Data Models Documentation",
+      "FilePath": "module/Data-Models-srcHTMLRenderer.md"
+    },
+    {
+      "ID": "6c03aa2e-aa59-4001-b491-2ab7f5fc6541",
+      "Title": "Data Models: src/util",
+      "Tier": "module",
+      "Angle": "data_models",
+      "Summary": "# Data Models Documentation",
+      "FilePath": "module/Data-Models-srcutil.md"
+    },
+    {
+      "ID": "3392624c-eeda-4555-9d5e-c6b226a586fb",
+      "Title": "Data Models: test",
+      "Tier": "module",
+      "Angle": "data_models",
+      "Summary": "# Data Models Documentation: `test`",
+      "FilePath": "module/Data-Models-test.md"
+    },
+    {
+      "ID": "52605945-3f2b-442d-a0bc-12610566079f",
+      "Title": "Interfaces: src",
+      "Tier": "module",
+      "Angle": "interfaces",
+      "Summary": "# Interfaces Documentation: `src`",
+      "FilePath": "module/Interfaces-src.md"
+    },
+    {
+      "ID": "4cd70477-814f-4ad6-b4b7-df096e101fa5",
+      "Title": "Interfaces: src/BackgroundRenderer",
+      "Tier": "module",
+      "Angle": "interfaces",
+      "Summary": "# Interfaces Documentation: `src/BackgroundRenderer`",
+      "FilePath": "module/Interfaces-srcBackgroundRenderer.md"
+    },
+    {
+      "ID": "bad7764c-c1aa-4b10-a941-e4b5dab064f3",
+      "Title": "Interfaces: src/HTMLRenderer",
+      "Tier": "module",
+      "Angle": "interfaces",
+      "Summary": "# Interfaces Documentation: src/HTMLRenderer",
+      "FilePath": "module/Interfaces-srcHTMLRenderer.md"
+    },
+    {
+      "ID": "348c5607-aac3-44dd-94ae-4eb084f76cc6",
+      "Title": "Interfaces: src/util",
+      "Tier": "module",
+      "Angle": "interfaces",
+      "Summary": "# Interfaces Documentation: `src/util`",
+      "FilePath": "module/Interfaces-srcutil.md"
+    },
+    {
+      "ID": "d23339d3-b531-40ae-a8b7-b86f10559c88",
+      "Title": "Interfaces: test",
+      "Tier": "module",
+      "Angle": "interfaces",
+      "Summary": "# Interfaces Documentation: test",
+      "FilePath": "module/Interfaces-test.md"
+    },
+    {
+      "ID": "769656fb-7bea-4b41-b851-a5832873268b",
+      "Title": "Overview: src",
+      "Tier": "module",
+      "Angle": "overview",
+      "Summary": "# Module Overview: src",
+      "FilePath": "module/Overview-src.md"
+    },
+    {
+      "ID": "32c8a6b4-f207-4d8f-becf-6873313749fc",
+      "Title": "Overview: src/BackgroundRenderer",
+      "Tier": "module",
+      "Angle": "overview",
+      "Summary": "# Background Renderer Module Overview",
+      "FilePath": "module/Overview-srcBackgroundRenderer.md"
+    },
+    {
+      "ID": "f30873cc-79b7-47ac-96d0-5eb0af4fe18d",
+      "Title": "Overview: src/HTMLRenderer",
+      "Tier": "module",
+      "Angle": "overview",
+      "Summary": "# Module Overview: HTML Rendering Engine",
+      "FilePath": "module/Overview-srcHTMLRenderer.md"
+    },
+    {
+      "ID": "405eecfc-06c1-4fcb-a8fe-98e3b523bf87",
+      "Title": "Overview: src/util",
+      "Tier": "module",
+      "Angle": "overview",
+      "Summary": "# Module Overview: src/util",
+      "FilePath": "module/Overview-srcutil.md"
+    },
+    {
+      "ID": "dda9e6f7-f364-4242-872a-1c001e843b4a",
+      "Title": "Overview: test",
+      "Tier": "module",
+      "Angle": "overview",
+      "Summary": "# Module Overview: test",
+      "FilePath": "module/Overview-test.md"
+    },
+    {
+      "ID": "c243a0a2-62f5-4f1e-9e18-2794fd238cba",
+      "Title": "Use Cases: src",
+      "Tier": "module",
+      "Angle": "use_cases",
+      "Summary": "# Use Cases Documentation: `src`",
+      "FilePath": "module/Use-Cases-src.md"
+    },
+    {
+      "ID": "583c21fe-f35a-4f56-9030-d90f4a434cab",
+      "Title": "Use Cases: src/BackgroundRenderer",
+      "Tier": "module",
+      "Angle": "use_cases",
+      "Summary": "# Use Cases Documentation: BackgroundRenderer Module",
+      "FilePath": "module/Use-Cases-srcBackgroundRenderer.md"
+    },
+    {
+      "ID": "afaa7cc6-594a-4879-9fa2-87d3800d2296",
+      "Title": "Use Cases: src/HTMLRenderer",
+      "Tier": "module",
+      "Angle": "use_cases",
+      "Summary": "# Use Cases Documentation: HTMLRenderer",
+      "FilePath": "module/Use-Cases-srcHTMLRenderer.md"
+    },
+    {
+      "ID": "5c151dbe-ae3a-48b9-b4c5-c3d91efeb205",
+      "Title": "Use Cases: src/util",
+      "Tier": "module",
+      "Angle": "use_cases",
+      "Summary": "# Use Cases Documentation: `src/util`",
+      "FilePath": "module/Use-Cases-srcutil.md"
+    },
+    {
+      "ID": "115dca4b-04ac-423c-aef3-289b04ea4ecb",
+      "Title": "Use Cases: test",
+      "Tier": "module",
+      "Angle": "use_cases",
+      "Summary": "# Use Cases Documentation: test",
+      "FilePath": "module/Use-Cases-test.md"
+    }
+  ],
+  "source_architecture_id": 37,
+  "source_architecture_name": "pdf2htmlEX",
+  "synced_at": "2026-02-18T16:28:47+02:00",
+  "synced_docs": 65,
+  "total_docs": 65
+}

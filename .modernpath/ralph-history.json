@@ -1,0 +1,50 @@
+{
+  "iterations": [
+    {
+      "iteration": 1,
+      "started_at": "2026-02-18T20:23:13.925814+02:00",
+      "ended_at": "2026-02-18T20:40:20.205429+02:00",
+      "duration_ms": 1026272,
+      "exit_code": 0,
+      "completion_detected": false,
+      "files_modified": 0
+    },
+    {
+      "iteration": 2,
+      "started_at": "2026-02-18T20:40:21.208145+02:00",
+      "ended_at": "2026-02-18T20:41:29.8755+02:00",
+      "duration_ms": 68659,
+      "exit_code": 1,
+      "completion_detected": false,
+      "files_modified": 0
+    },
+    {
+      "iteration": 3,
+      "started_at": "2026-02-18T20:41:30.87777+02:00",
+      "ended_at": "2026-02-18T20:51:21.37954+02:00",
+      "duration_ms": 590494,
+      "exit_code": 0,
+      "completion_detected": false,
+      "files_modified": 0
+    },
+    {
+      "iteration": 4,
+      "started_at": "2026-02-18T20:51:22.381221+02:00",
+      "ended_at": "2026-02-18T20:58:34.875839+02:00",
+      "duration_ms": 432487,
+      "exit_code": 0,
+      "completion_detected": false,
+      "files_modified": 0
+    },
+    {
+      "iteration": 5,
+      "started_at": "2026-02-18T20:58:35.876668+02:00",
+      "ended_at": "2026-02-18T21:09:39.650191+02:00",
+      "duration_ms": 663767,
+      "exit_code": 0,
+      "completion_detected": true,
+      "files_modified": 0
+    }
+  ],
+  "total_duration_ms": 2781679
+}
