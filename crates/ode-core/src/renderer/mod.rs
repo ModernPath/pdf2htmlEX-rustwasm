@@ -333,6 +333,11 @@ pub fn render_pdf_page(
                     let (tm_x, tm_y) = text_matrix.transform_point(0.0, 0.0);
                     let (page_x, page_y) = ctm.transform_point(tm_x, tm_y);
 
+                    // PDF coordinate system has Y=0 at bottom, increasing upward.
+                    // HTML/CSS has Y=0 at top, increasing downward.
+                    // Always flip Y to convert from PDF device space to CSS top.
+                    let html_y = page_height - page_y;
+
                     // Compute effective font size considering CTM scale
                     let scale_y = (ctm.b * ctm.b + ctm.d * ctm.d).sqrt();
                     let effective_font_size = graphics_state.font_size * scale_y;
@@ -342,7 +347,7 @@ pub fn render_pdf_page(
 
                     text_extractor.update_state(&state_for_text);
                     text_extractor
-                        .add_text(text, page_x, page_y)
+                        .add_text(text, page_x, html_y)
                         .map_err(|e| OdeError::TextError(format!("Failed to add text: {}", e)))?;
                 }
             }
@@ -449,7 +454,10 @@ pub fn render_pdf_page(
                         let (_, y2) = ctm.transform_point(0.0, 1.0);
                         let w = (x2 - x).abs();
                         let h = (y2 - y).abs();
-                        let img_y = y.min(y2);
+
+                        // PDF Y=0 at bottom, HTML Y=0 at top.
+                        // The top of the image in HTML = page_height - max(y, y2).
+                        let img_y = page_height - y.max(y2);
 
                         use base64::Engine;
                         let b64 = base64::engine::general_purpose::STANDARD.encode(&img.data);
