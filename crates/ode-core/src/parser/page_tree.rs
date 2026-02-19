@@ -256,53 +256,8 @@ impl<'a> PageTreeParser<'a> {
             }
         }
 
-        // Extract image XObjects from Resources
-        let mut images = std::collections::HashMap::new();
-        if let Some(ref res_dict) = resources_dict {
-            let xobject_dict = res_dict.get("XObject").and_then(|obj| self.resolve_dict(obj));
-            if let Some(xobj_dict) = xobject_dict {
-                for (xobj_name, xobj_ref_obj) in &xobj_dict.entries {
-                    if let Some(xobj_ref) = xobj_ref_obj.as_reference() {
-                        if let Some(xobj_obj) = self.resolver.dereference(xobj_ref) {
-                            if let PdfObject::Stream(data, stream_dict) = &xobj_obj {
-                                let subtype = stream_dict.get("Subtype").and_then(|v| v.as_name());
-                                if subtype == Some("Image") {
-                                    let img_w = stream_dict.get("Width").and_then(|v| v.as_number()).unwrap_or(0.0) as u32;
-                                    let img_h = stream_dict.get("Height").and_then(|v| v.as_number()).unwrap_or(0.0) as u32;
-                                    let filter = stream_dict.get("Filter").and_then(|v| v.as_name()).unwrap_or("");
-
-                                    let (img_data, mime) = match filter {
-                                        "DCTDecode" => (data.clone(), "image/jpeg"),
-                                        "JPXDecode" => (data.clone(), "image/jp2"),
-                                        "FlateDecode" => {
-                                            // Raw pixel data — encode as PNG
-                                            let colorspace = stream_dict.get("ColorSpace").and_then(|v| v.as_name()).unwrap_or("DeviceRGB");
-                                            let channels: u8 = match colorspace {
-                                                "DeviceGray" => 1,
-                                                "DeviceRGB" => 3,
-                                                "DeviceCMYK" => 4,
-                                                _ => 3,
-                                            };
-                                            let png_data = encode_raw_pixels_as_png(data, img_w, img_h, channels);
-                                            (png_data, "image/png")
-                                        }
-                                        _ => continue,
-                                    };
-
-                                    images.insert(xobj_name.clone(), super::PageImage {
-                                        name: xobj_name.clone(),
-                                        data: img_data,
-                                        width: img_w,
-                                        height: img_h,
-                                        mime_type: mime.to_string(),
-                                    });
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        // Extract XObjects (images and forms) from Resources
+        let (images, form_xobjects) = self.extract_xobjects(&resources_dict);
 
         Ok(PdfPage {
             page_number,
@@ -314,7 +269,147 @@ impl<'a> PageTreeParser<'a> {
             dict: Some(dict.clone()),
             font_cmaps,
             images,
+            form_xobjects,
         })
+    }
+
+    fn extract_xobjects(
+        &self,
+        resources_dict: &Option<Dictionary>,
+    ) -> (
+        std::collections::HashMap<String, super::PageImage>,
+        std::collections::HashMap<String, super::FormXObject>,
+    ) {
+        let mut images = std::collections::HashMap::new();
+        let mut form_xobjects = std::collections::HashMap::new();
+
+        let res_dict = match resources_dict {
+            Some(d) => d,
+            None => return (images, form_xobjects),
+        };
+
+        let xobj_dict = match res_dict.get("XObject").and_then(|obj| self.resolve_dict(obj)) {
+            Some(d) => d,
+            None => return (images, form_xobjects),
+        };
+
+        for (xobj_name, xobj_ref_obj) in &xobj_dict.entries {
+            let xobj_ref = match xobj_ref_obj.as_reference() {
+                Some(r) => r,
+                None => continue,
+            };
+            let xobj_obj = match self.resolver.dereference(xobj_ref) {
+                Some(o) => o,
+                None => continue,
+            };
+            if let PdfObject::Stream(data, stream_dict) = &xobj_obj {
+                let subtype = stream_dict.get("Subtype").and_then(|v| v.as_name());
+
+                if subtype == Some("Image") {
+                    let img_w = stream_dict.get("Width").and_then(|v| v.as_number()).unwrap_or(0.0) as u32;
+                    let img_h = stream_dict.get("Height").and_then(|v| v.as_number()).unwrap_or(0.0) as u32;
+                    let filter = stream_dict.get("Filter").and_then(|v| v.as_name()).unwrap_or("");
+
+                    let (img_data, mime) = match filter {
+                        "DCTDecode" => (data.clone(), "image/jpeg"),
+                        "JPXDecode" => (data.clone(), "image/jp2"),
+                        "FlateDecode" => {
+                            let colorspace = stream_dict.get("ColorSpace").and_then(|v| v.as_name()).unwrap_or("DeviceRGB");
+                            let channels: u8 = match colorspace {
+                                "DeviceGray" => 1,
+                                "DeviceRGB" => 3,
+                                "DeviceCMYK" => 4,
+                                _ => 3,
+                            };
+                            let png_data = encode_raw_pixels_as_png(data, img_w, img_h, channels);
+                            (png_data, "image/png")
+                        }
+                        _ => continue,
+                    };
+
+                    images.insert(xobj_name.clone(), super::PageImage {
+                        name: xobj_name.clone(),
+                        data: img_data,
+                        width: img_w,
+                        height: img_h,
+                        mime_type: mime.to_string(),
+                    });
+                } else if subtype == Some("Form") {
+                    // Extract BBox
+                    let bbox = stream_dict.get("BBox")
+                        .and_then(|v| if let PdfObject::Array(arr) = v {
+                            if arr.len() >= 4 {
+                                Some([
+                                    arr[0].as_number().unwrap_or(0.0),
+                                    arr[1].as_number().unwrap_or(0.0),
+                                    arr[2].as_number().unwrap_or(0.0),
+                                    arr[3].as_number().unwrap_or(0.0),
+                                ])
+                            } else { None }
+                        } else { None })
+                        .unwrap_or([0.0, 0.0, 0.0, 0.0]);
+
+                    // Extract Matrix (optional)
+                    let matrix = stream_dict.get("Matrix")
+                        .and_then(|v| if let PdfObject::Array(arr) = v {
+                            if arr.len() >= 6 {
+                                Some([
+                                    arr[0].as_number().unwrap_or(1.0),
+                                    arr[1].as_number().unwrap_or(0.0),
+                                    arr[2].as_number().unwrap_or(0.0),
+                                    arr[3].as_number().unwrap_or(1.0),
+                                    arr[4].as_number().unwrap_or(0.0),
+                                    arr[5].as_number().unwrap_or(0.0),
+                                ])
+                            } else { None }
+                        } else { None });
+
+                    // Extract form's own Resources
+                    let form_resources = stream_dict.get("Resources")
+                        .and_then(|obj| self.resolve_dict(obj));
+
+                    // Extract font CMaps from form's resources
+                    let mut form_font_cmaps = std::collections::HashMap::new();
+                    if let Some(ref form_res) = form_resources {
+                        let font_dict = form_res.get("Font").and_then(|obj| self.resolve_dict(obj));
+                        if let Some(fd) = font_dict {
+                            for (font_name, font_ref_obj) in &fd.entries {
+                                if let Some(font_ref) = font_ref_obj.as_reference() {
+                                    if let Some(font_obj) = self.resolver.dereference(font_ref) {
+                                        if let PdfObject::Dictionary(ref font_d) = font_obj {
+                                            if let Some(tounicode_ref_obj) = font_d.get("ToUnicode") {
+                                                if let Some(tounicode_ref) = tounicode_ref_obj.as_reference() {
+                                                    if let Some(PdfObject::Stream(cmap_data, _)) = self.resolver.dereference(tounicode_ref) {
+                                                        let cmap = super::ToUnicodeCMap::parse(&cmap_data);
+                                                        form_font_cmaps.insert(font_name.clone(), cmap);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Recursively extract nested XObjects from form's resources
+                    let (form_images, nested_forms) = self.extract_xobjects(&form_resources);
+
+                    form_xobjects.insert(xobj_name.clone(), super::FormXObject {
+                        name: xobj_name.clone(),
+                        content_stream: data.clone(),
+                        resources: form_resources,
+                        bbox,
+                        matrix,
+                        font_cmaps: form_font_cmaps,
+                        images: form_images,
+                        form_xobjects: nested_forms,
+                    });
+                }
+            }
+        }
+
+        (images, form_xobjects)
     }
 
     fn extract_content_stream(&self, contents: &PdfObject) -> Result<Vec<u8>, OdeError> {

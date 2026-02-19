@@ -233,8 +233,26 @@ impl ContentStreamParser {
                 b'\\' => {
                     if self.position < self.data.len() {
                         let next = self.data[self.position];
-                        self.position += 1;
-                        result.extend(Self::escape_char(next));
+                        if next.is_ascii_digit() && next <= b'7' {
+                            // Octal escape: consume up to 3 octal digits
+                            let mut octal_val: u16 = (next - b'0') as u16;
+                            self.position += 1;
+                            for _ in 0..2 {
+                                if self.position < self.data.len() {
+                                    let d = self.data[self.position];
+                                    if d.is_ascii_digit() && d <= b'7' {
+                                        octal_val = octal_val * 8 + (d - b'0') as u16;
+                                        self.position += 1;
+                                    } else {
+                                        break;
+                                    }
+                                }
+                            }
+                            result.push((octal_val & 0xFF) as u8);
+                        } else {
+                            self.position += 1;
+                            result.extend(Self::escape_char(next));
+                        }
                     }
                 }
                 _ => {

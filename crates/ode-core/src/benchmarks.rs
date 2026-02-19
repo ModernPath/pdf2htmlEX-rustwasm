@@ -55,6 +55,7 @@ mod performance_benchmarks {
             dict: None,
             font_cmaps: std::collections::HashMap::new(),
             images: std::collections::HashMap::new(),
+            form_xobjects: std::collections::HashMap::new(),
         });
 
         let config = ConversionConfig::default();

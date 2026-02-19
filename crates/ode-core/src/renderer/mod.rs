@@ -333,9 +333,10 @@ pub fn render_pdf_page(
                     let (tm_x, tm_y) = text_matrix.transform_point(0.0, 0.0);
                     let (page_x, page_y) = ctm.transform_point(tm_x, tm_y);
 
-                    // Compute effective font size considering CTM scale
-                    let scale_y = (ctm.b * ctm.b + ctm.d * ctm.d).sqrt();
-                    let effective_font_size = graphics_state.font_size * scale_y;
+                    // Font size = font_size × Tm scale × CTM scale
+                    let tm_scale_y = (text_matrix.b * text_matrix.b + text_matrix.d * text_matrix.d).sqrt();
+                    let ctm_scale_y = (ctm.b * ctm.b + ctm.d * ctm.d).sqrt();
+                    let effective_font_size = graphics_state.font_size * tm_scale_y * ctm_scale_y;
 
                     // PDF coordinate system has Y=0 at bottom, increasing upward.
                     // HTML/CSS has Y=0 at top, increasing downward.
@@ -446,19 +447,14 @@ pub fn render_pdf_page(
                 pending_rect = None;
             }
             ContentOp::Do => {
-                // XObject reference — look up image and embed it
                 if let Some(ref xobj_name) = op.font_name {
+                    // Check if it's an image XObject
                     if let Some(img) = page.images.get(xobj_name) {
-                        // The CTM positions the image: the cm before Do sets up
-                        // a matrix that maps the unit square to the image position
                         let (x, y) = ctm.transform_point(0.0, 0.0);
                         let (x2, _) = ctm.transform_point(1.0, 0.0);
                         let (_, y2) = ctm.transform_point(0.0, 1.0);
                         let w = (x2 - x).abs();
                         let h = (y2 - y).abs();
-
-                        // PDF Y=0 at bottom, HTML Y=0 at top.
-                        // The top of the image in HTML = page_height - max(y, y2).
                         let img_y = page_height - y.max(y2);
 
                         use base64::Engine;
@@ -473,6 +469,19 @@ pub fn render_pdf_page(
                             height: h,
                             data_uri,
                         });
+                    }
+                    // Check if it's a Form XObject — render its content recursively
+                    else if let Some(form) = page.form_xobjects.get(xobj_name) {
+                        if let Ok(form_result) = render_form_xobject(
+                            form, &ctm, page_width, page_height,
+                            &graphics_state, &current_font_name, page,
+                        ) {
+                            text_extractor.merge_spans(&form_result.text_spans);
+                            rendered_images.extend(form_result.images);
+                            if background_color.is_none() {
+                                background_color = form_result.background_color;
+                            }
+                        }
                     }
                 }
             }
@@ -505,6 +514,245 @@ pub fn render_pdf_page(
         font_ids,
         background_color,
         images: rendered_images,
+    })
+}
+
+struct FormRenderResult {
+    text_spans: Vec<TextSpan>,
+    images: Vec<PageImageRef>,
+    background_color: Option<String>,
+}
+
+/// Recursively render a Form XObject's content stream.
+fn render_form_xobject(
+    form: &crate::parser::FormXObject,
+    parent_ctm: &crate::util::math::TransformMatrix,
+    page_width: f64,
+    page_height: f64,
+    parent_gs: &GraphicsState,
+    parent_font_name: &Option<String>,
+    page: &crate::parser::PdfPage,
+) -> Result<FormRenderResult, OdeError> {
+    use crate::util::math::TransformMatrix;
+
+    // Apply the form's own Matrix to the parent CTM
+    let form_ctm = if let Some(m) = form.matrix {
+        let form_matrix = TransformMatrix {
+            a: m[0], b: m[1], c: m[2], d: m[3], e: m[4], f: m[5],
+        };
+        *parent_ctm * form_matrix
+    } else {
+        *parent_ctm
+    };
+
+    let mut text_extractor = text::TextExtractor::new();
+    let ops = parse_content_stream(&form.content_stream)?;
+
+    let mut ctm = form_ctm;
+    let mut graphics_state = parent_gs.clone();
+    let mut text_matrix = TransformMatrix::identity();
+    let mut state_stack: Vec<(TransformMatrix, GraphicsState, Option<String>)> = Vec::new();
+    let mut current_font_name: Option<String> = parent_font_name.clone();
+    let mut background_color: Option<String> = None;
+    let mut pending_rect: Option<(f64, f64, f64, f64)> = None;
+    let mut rendered_images: Vec<PageImageRef> = Vec::new();
+
+    // Use form's font_cmaps if available, fall back to page's
+    let font_cmaps = if !form.font_cmaps.is_empty() {
+        &form.font_cmaps
+    } else {
+        &page.font_cmaps
+    };
+
+    // Merge image sources: form's own + page's
+    for op in ops {
+        match op.operator {
+            ContentOp::GsSave => {
+                state_stack.push((ctm, graphics_state.clone(), current_font_name.clone()));
+            }
+            ContentOp::GsRestore => {
+                if let Some((saved_ctm, saved_state, saved_font)) = state_stack.pop() {
+                    ctm = saved_ctm;
+                    graphics_state = saved_state;
+                    current_font_name = saved_font;
+                }
+            }
+            ContentOp::CM => {
+                if op.operands.len() >= 6 {
+                    let new_matrix = TransformMatrix {
+                        a: op.operands[0], b: op.operands[1],
+                        c: op.operands[2], d: op.operands[3],
+                        e: op.operands[4], f: op.operands[5],
+                    };
+                    ctm = ctm * new_matrix;
+                }
+            }
+            ContentOp::BT => {
+                text_extractor.finalize_segment();
+                text_matrix = TransformMatrix::identity();
+            }
+            ContentOp::ET => {
+                text_extractor.finalize_segment();
+            }
+            ContentOp::Tf => {
+                if !op.operands.is_empty() {
+                    let font_size = op.operands[op.operands.len() - 1].abs();
+                    if font_size > 0.0 {
+                        graphics_state.font_size = font_size;
+                    }
+                }
+                if let Some(ref name) = op.font_name {
+                    current_font_name = Some(name.clone());
+                }
+                if graphics_state.font_info.is_none() {
+                    graphics_state.font_info = Some(crate::render::state::FontInfo {
+                        id: 0, use_tounicode: true, em_size: 1000.0,
+                        space_width: 250.0, ascent: 0.8, descent: -0.2,
+                        is_type3: false, font_size_scale: 1.0,
+                    });
+                }
+            }
+            ContentOp::Tm => {
+                if op.operands.len() >= 6 {
+                    text_matrix = TransformMatrix {
+                        a: op.operands[0], b: op.operands[1],
+                        c: op.operands[2], d: op.operands[3],
+                        e: op.operands[4], f: op.operands[5],
+                    };
+                }
+            }
+            ContentOp::Td => {
+                if op.operands.len() >= 2 {
+                    let tx = op.operands[0];
+                    let ty = op.operands[1];
+                    text_matrix.e += tx * text_matrix.a + ty * text_matrix.c;
+                    text_matrix.f += tx * text_matrix.b + ty * text_matrix.d;
+                }
+            }
+            ContentOp::TD => {
+                if op.operands.len() >= 2 {
+                    let tx = op.operands[0];
+                    let ty = op.operands[1];
+                    text_matrix.e += tx * text_matrix.a + ty * text_matrix.c;
+                    text_matrix.f += tx * text_matrix.b + ty * text_matrix.d;
+                }
+            }
+            ContentOp::Tj | ContentOp::TJ => {
+                let decoded_text = if let Some(ref raw) = op.text_raw {
+                    if let Some(ref fname) = current_font_name {
+                        if let Some(cmap) = font_cmaps.get(fname) {
+                            if !cmap.char_map.is_empty() {
+                                Some(cmap.decode_bytes(raw))
+                            } else { op.text.clone() }
+                        } else { op.text.clone() }
+                    } else { op.text.clone() }
+                } else { op.text.clone() };
+
+                if let Some(text) = &decoded_text {
+                    let (tm_x, tm_y) = text_matrix.transform_point(0.0, 0.0);
+                    let (page_x, page_y) = ctm.transform_point(tm_x, tm_y);
+
+                    // Font size = font_size × Tm scale × CTM scale
+                    let tm_scale_y = (text_matrix.b * text_matrix.b + text_matrix.d * text_matrix.d).sqrt();
+                    let ctm_scale_y = (ctm.b * ctm.b + ctm.d * ctm.d).sqrt();
+                    let effective_font_size = graphics_state.font_size * tm_scale_y * ctm_scale_y;
+                    let html_y = page_height - page_y - effective_font_size * 0.85;
+
+                    let mut state_for_text = graphics_state.clone();
+                    state_for_text.font_size = effective_font_size;
+
+                    text_extractor.update_state(&state_for_text);
+                    text_extractor
+                        .add_text(text, page_x, html_y)
+                        .map_err(|e| OdeError::TextError(format!("Form text: {}", e)))?;
+                }
+            }
+            ContentOp::Tc => {
+                if !op.operands.is_empty() { graphics_state.letter_space = op.operands[0]; }
+            }
+            ContentOp::Tw => {
+                if !op.operands.is_empty() { graphics_state.word_space = op.operands[0]; }
+            }
+            ContentOp::RGfill => {
+                if op.operands.len() >= 3 {
+                    let r = (op.operands[0].clamp(0.0, 1.0) * 255.0) as u8;
+                    let g = (op.operands[1].clamp(0.0, 1.0) * 255.0) as u8;
+                    let b = (op.operands[2].clamp(0.0, 1.0) * 255.0) as u8;
+                    graphics_state.fill_color = crate::types::color::Color::new(r, g, b);
+                }
+            }
+            ContentOp::Gfill => {
+                if !op.operands.is_empty() {
+                    let v = (op.operands[0].clamp(0.0, 1.0) * 255.0) as u8;
+                    graphics_state.fill_color = crate::types::color::Color::new(v, v, v);
+                }
+            }
+            ContentOp::Kfill => {
+                if op.operands.len() >= 4 {
+                    let c = op.operands[0]; let m = op.operands[1];
+                    let y = op.operands[2]; let k = op.operands[3];
+                    let r = ((1.0 - c) * (1.0 - k) * 255.0) as u8;
+                    let g = ((1.0 - m) * (1.0 - k) * 255.0) as u8;
+                    let b = ((1.0 - y) * (1.0 - k) * 255.0) as u8;
+                    graphics_state.fill_color = crate::types::color::Color::new(r, g, b);
+                }
+            }
+            ContentOp::SCN | ContentOp::SC => {
+                if op.operands.len() >= 3 {
+                    let r = (op.operands[0].clamp(0.0, 1.0) * 255.0) as u8;
+                    let g = (op.operands[1].clamp(0.0, 1.0) * 255.0) as u8;
+                    let b = (op.operands[2].clamp(0.0, 1.0) * 255.0) as u8;
+                    graphics_state.fill_color = crate::types::color::Color::new(r, g, b);
+                }
+            }
+            ContentOp::RE => {
+                if op.operands.len() >= 4 {
+                    pending_rect = Some((op.operands[0], op.operands[1], op.operands[2], op.operands[3]));
+                }
+            }
+            ContentOp::F => { pending_rect = None; }
+            ContentOp::Do => {
+                // Nested Form XObjects or images within the form
+                if let Some(ref nested_name) = op.font_name {
+                    if let Some(img) = form.images.get(nested_name).or_else(|| page.images.get(nested_name)) {
+                        let (x, y) = ctm.transform_point(0.0, 0.0);
+                        let (x2, _) = ctm.transform_point(1.0, 0.0);
+                        let (_, y2) = ctm.transform_point(0.0, 1.0);
+                        let w = (x2 - x).abs();
+                        let h = (y2 - y).abs();
+                        let img_y = page_height - y.max(y2);
+
+                        use base64::Engine;
+                        let b64 = base64::engine::general_purpose::STANDARD.encode(&img.data);
+                        let data_uri = format!("data:{};base64,{}", img.mime_type, b64);
+
+                        rendered_images.push(PageImageRef {
+                            name: nested_name.clone(),
+                            x, y: img_y, width: w, height: h, data_uri,
+                        });
+                    }
+                    // Nested form XObject
+                    else if let Some(nested_form) = form.form_xobjects.get(nested_name) {
+                        if let Ok(nested_result) = render_form_xobject(
+                            nested_form, &ctm, page_width, page_height,
+                            &graphics_state, &current_font_name, page,
+                        ) {
+                            text_extractor.merge_spans(&nested_result.text_spans);
+                            rendered_images.extend(nested_result.images);
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    text_extractor.finalize_segment();
+
+    Ok(FormRenderResult {
+        text_spans: text_extractor.get_spans(),
+        images: rendered_images,
+        background_color,
     })
 }
 

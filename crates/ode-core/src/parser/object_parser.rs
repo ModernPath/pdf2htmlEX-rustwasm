@@ -383,19 +383,37 @@ impl<'a> PdfParser<'a> {
             } else if byte == b'\\' {
                 if self.pos < self.data.len() {
                     let escaped = self.data[self.pos];
-                    self.pos += 1;
-                    let ch = match escaped {
-                        b'n' => '\n',
-                        b'r' => '\r',
-                        b't' => '\t',
-                        b'b' => '\x08',
-                        b'f' => '\x0c',
-                        b'(' => '(',
-                        b')' => ')',
-                        b'\\' => '\\',
-                        d => (d as char),
-                    };
-                    result.push(ch);
+                    if escaped.is_ascii_digit() && escaped <= b'7' {
+                        // Octal escape: consume up to 3 octal digits
+                        let mut octal_val: u16 = (escaped - b'0') as u16;
+                        self.pos += 1;
+                        for _ in 0..2 {
+                            if self.pos < self.data.len() {
+                                let d = self.data[self.pos];
+                                if d.is_ascii_digit() && d <= b'7' {
+                                    octal_val = octal_val * 8 + (d - b'0') as u16;
+                                    self.pos += 1;
+                                } else {
+                                    break;
+                                }
+                            }
+                        }
+                        result.push((octal_val & 0xFF) as u8 as char);
+                    } else {
+                        self.pos += 1;
+                        let ch = match escaped {
+                            b'n' => '\n',
+                            b'r' => '\r',
+                            b't' => '\t',
+                            b'b' => '\x08',
+                            b'f' => '\x0c',
+                            b'(' => '(',
+                            b')' => ')',
+                            b'\\' => '\\',
+                            d => d as char,
+                        };
+                        result.push(ch);
+                    }
                 }
             } else if byte.is_ascii() {
                 result.push(byte as char);

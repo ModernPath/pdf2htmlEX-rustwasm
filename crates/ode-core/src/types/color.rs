@@ -67,6 +67,25 @@ impl Color {
             format!("rgb({}, {}, {})", self.r, self.g, self.b)
         }
     }
+
+    pub fn from_css_string(s: &str) -> Self {
+        if s == "transparent" {
+            let mut c = Self::new(0, 0, 0);
+            c.transparent = true;
+            return c;
+        }
+        // Parse "rgb(r, g, b)"
+        let s = s.trim_start_matches("rgb(").trim_end_matches(')');
+        let parts: Vec<&str> = s.split(',').collect();
+        if parts.len() == 3 {
+            let r = parts[0].trim().parse::<u8>().unwrap_or(0);
+            let g = parts[1].trim().parse::<u8>().unwrap_or(0);
+            let b = parts[2].trim().parse::<u8>().unwrap_or(0);
+            Self::new(r, g, b)
+        } else {
+            Self::new(0, 0, 0)
+        }
+    }
 }
 
 impl Default for Color {

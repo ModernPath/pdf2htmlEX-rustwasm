@@ -131,6 +131,21 @@ impl TextExtractor {
             .collect()
     }
 
+    /// Merge pre-rendered text spans (e.g. from Form XObjects) into this extractor.
+    pub fn merge_spans(&mut self, spans: &[crate::renderer::TextSpan]) {
+        self.finalize_segment();
+        for span in spans {
+            self.segments.push(TextSegment {
+                text: span.text.clone(),
+                x: span.x,
+                y: span.y,
+                font_size: span.font_size,
+                color: Color::from_css_string(&span.color),
+                font_id: span.font_id.unwrap_or(0),
+            });
+        }
+    }
+
     fn state_changed(&self, new_state: &GraphicsState) -> bool {
         if self.current_segment.is_none() {
             return false;

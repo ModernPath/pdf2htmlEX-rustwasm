@@ -270,6 +270,13 @@ impl ToUnicodeCMap {
             }
         }
 
+        // If codespace says 2-byte but all mapped character codes fit in a single byte,
+        // treat as single-byte. This handles CMaps with <0000><FFFF> codespace that only
+        // map codes 0-255 (common with WinAnsiEncoding fonts).
+        if !is_single_byte && !map.is_empty() && map.keys().all(|&k| k <= 0xFF) {
+            is_single_byte = true;
+        }
+
         Self { char_map: map, is_single_byte }
     }
 
@@ -333,6 +340,19 @@ pub struct PageImage {
 }
 
 #[derive(Debug, Clone)]
+pub struct FormXObject {
+    pub name: String,
+    pub content_stream: Vec<u8>,
+    pub resources: Option<Dictionary>,
+    pub bbox: [f64; 4],
+    pub matrix: Option<[f64; 6]>,
+    pub font_cmaps: std::collections::HashMap<String, ToUnicodeCMap>,
+    pub images: std::collections::HashMap<String, PageImage>,
+    /// Nested form XObjects within this form
+    pub form_xobjects: std::collections::HashMap<String, FormXObject>,
+}
+
+#[derive(Debug, Clone)]
 pub struct PdfPage {
     pub page_number: usize,
     pub width: f64,
@@ -343,6 +363,7 @@ pub struct PdfPage {
     pub dict: Option<Dictionary>,
     pub font_cmaps: std::collections::HashMap<String, ToUnicodeCMap>,
     pub images: std::collections::HashMap<String, PageImage>,
+    pub form_xobjects: std::collections::HashMap<String, FormXObject>,
 }
 
 impl PdfDocument {
@@ -448,6 +469,7 @@ pub fn parse_pdf(data: &[u8]) -> Result<PdfDocument, OdeError> {
                 dict: None,
                 font_cmaps: std::collections::HashMap::new(),
                 images: std::collections::HashMap::new(),
+                form_xobjects: std::collections::HashMap::new(),
             });
         }
     }
@@ -630,6 +652,7 @@ fn extract_page_at_offset(
         rotation,
         font_cmaps: std::collections::HashMap::new(),
         images: std::collections::HashMap::new(),
+        form_xobjects: std::collections::HashMap::new(),
         dict: None,
     })
 }
