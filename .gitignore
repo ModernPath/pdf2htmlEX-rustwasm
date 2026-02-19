@@ -16,7 +16,9 @@
 !.env.example
 
 # ModernPath CLI local data
-.modernpath/
+.modernpath/auth.json
+.modernpath/config.json
+.modernpath/ralph_history.json
 
 # Temporary files
 temp_*
@@ -24,3 +26,7 @@ temp_*
 
 # OS files
 Thumbs.db
+
+#deployment
+config/
+.kamal/
