@@ -1,0 +1,26 @@
+# Build artifacts
+/target/
+**/*.rs.bk
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# ModernPath CLI local data
+.modernpath/
+
+# Temporary files
+temp_*
+*.tmp
+
+# OS files
+Thumbs.db

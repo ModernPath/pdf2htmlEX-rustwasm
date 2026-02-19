@@ -1,0 +1,140 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ode-worker
+  namespace: ode
+  labels:
+    app: ode-worker
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9090
+    targetPort: 9090
+    protocol: TCP
+    name: metrics
+  selector:
+    app: ode-worker
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ode-worker
+  namespace: ode
+  labels:
+    app: ode-worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ode-worker
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: ode-worker
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    spec:
+      serviceAccountName: ode-worker
+      containers:
+      - name: ode-worker
+        image: <ECR_REPOSITORY_URL>/ode-worker:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9090
+          name: metrics
+          protocol: TCP
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: ode-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: ode-secrets
+              key: redis-url
+        - name: REDIS_KEY_PREFIX
+          valueFrom:
+            configMapKeyRef:
+              name: ode-config
+              key: REDIS_KEY_PREFIX
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: ode-secrets
+              key: aws-access-key-id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ode-secrets
+              key: aws-secret-access-key
+        - name: AWS_REGION
+          valueFrom:
+            secretKeyRef:
+              name: ode-secrets
+              key: aws-region
+        - name: DOCUMENTS_BUCKET
+          valueFrom:
+            secretKeyRef:
+              name: ode-secrets
+              key: documents-bucket
+        - name: EXPORTS_BUCKET
+          valueFrom:
+            secretKeyRef:
+              name: ode-secrets
+              key: exports-bucket
+        - name: FONTS_BUCKET
+          valueFrom:
+            secretKeyRef:
+              name: ode-secrets
+              key: fonts-bucket
+        - name: DOCUMENT_MAX_SIZE_MB
+          valueFrom:
+            configMapKeyRef:
+              name: ode-config
+              key: DOCUMENT_MAX_SIZE_MB
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: ode-config
+              key: LOG_LEVEL
+        - name: RUST_LOG
+          valueFrom:
+            configMapKeyRef:
+              name: ode-config
+              key: RUST_LOG
+        - name: RUST_BACKTRACE
+          value: "0"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 9090
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+      terminationGracePeriodSeconds: 120

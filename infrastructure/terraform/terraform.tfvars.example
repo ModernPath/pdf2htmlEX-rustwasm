@@ -1,0 +1,17 @@
+# Copy this file to terraform.tfvars and fill in your values
+# DO NOT commit terraform.tfvars to version control
+
+# Basic Configuration
+aws_region  = "us-east-1"
+project     = "ode"
+environment = "production"
+
+# RDS Configuration
+database_name     = "odedb"
+database_username = "odeadmin"
+database_password = "CHANGE_ME_SECURE_PASSWORD"
+
+# Optional Overrides
+eks_version          = "1.29"
+enable_nat_gateway   = true
+multi_az             = true

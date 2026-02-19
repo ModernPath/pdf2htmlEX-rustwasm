@@ -1,0 +1,265 @@
+name: CD - Docker Build & Deploy
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  build-and-push:
+    name: Build and Push Images
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - ode-api
+          - ode-worker
+          - ode-core
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set Docker image tag
+        id: docker-meta
+        run: |
+          if [[ "${{ github.ref }}" == "refs/tags/"* ]]; then
+            echo "tags=${{ steps.login-ecr.outputs.registry }}/ode-${{ matrix.service }}:${GITHUB_REF#refs/tags/},${{ steps.login-ecr.outputs.registry }}/ode-${{ matrix.service }}:latest" >> $GITHUB_OUTPUT
+          else
+            echo "tags=${{ steps.login-ecr.outputs.registry }}/ode-${{ matrix.service }}:${GITHUB_SHA::7},latest" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ matrix.service }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-${{ matrix.service }}-
+            ${{ runner.os }}-buildx-
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/${{ matrix.service }}.Dockerfile
+          push: true
+          tags: ${{ steps.docker-meta.outputs.tags }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          platforms: linux/amd64
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+      - name: Image scan for vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/ode-${{ matrix.service }}:${{ github.sha::7 }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  deploy:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: ${{ github.event.inputs.environment || 'production' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name ode-production-cluster --region ${{ env.AWS_REGION }}
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.29.0'
+
+      - name: Set image tag
+        id: image-tag
+        run: |
+          if [[ "${{ github.ref }}" == "refs/tags/"* ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+            echo "is_tag=true" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+            echo "is_tag=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get ECR registry
+        id: ecr-registry
+        run: |
+          registry=$(aws ecr describe-repositories --query 'repositories[0].repositoryUri' --output text | cut -d'/' -f1)
+          echo "registry=$registry" >> $GITHUB_OUTPUT
+
+      - name: Update Kubernetes deployments
+        run: |
+          # Update API deployment
+          kubectl set image deployment/ode-api ode-api=${{ steps.ecr-registry.outputs.registry }}/ode-api:${{ steps.image-tag.outputs.tag }} -n ode
+
+          # Update worker deployment
+          kubectl set image deployment/ode-worker ode-worker=${{ steps.ecr-registry.outputs.registry }}/ode-worker:${{ steps.image-tag.outputs.tag }} -n ode
+
+          # Update viewer deployment
+          kubectl set image deployment/ode-viewer ode-viewer=${{ steps.ecr-registry.outputs.registry }}/ode-viewer:${{ steps.image-tag.outputs.tag }} -n ode
+
+      - name: Wait for rollout to complete
+        run: |
+          echo "Waiting for API deployment to complete..."
+          kubectl rollout status deployment/ode-api -n ode --timeout=5m
+
+          echo "Waiting for Worker deployment to complete..."
+          kubectl rollout status deployment/ode-worker -n ode --timeout=5m
+
+          echo "Waiting for Viewer deployment to complete..."
+          kubectl rollout status deployment/ode-viewer -n ode --timeout=5m
+
+      - name: Verify pods are running
+        run: |
+          kubectl get pods -n ode
+          kubectl get hpa -n ode
+          kubectl top pods -n ode || true
+
+      - name: Create deployment annotation
+        run: |
+          kubectl annotate deployment/ode-api -n ode \
+            kubernetes.io/change-cause="Deployed tag ${{ steps.image-tag.outputs.tag }} at $(date)" \
+            --overwrite
+
+          kubectl annotate deployment/ode-worker -n ode \
+            kubernetes.io/change-cause="Deployed tag ${{ steps.image-tag.outputs.tag }} at $(date)" \
+            --overwrite
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Deployment completed successfully"
+          else
+            echo "❌ Deployment failed"
+            exit 1
+          fi
+
+  smoke-test:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get API endpoint
+        id: api-endpoint
+        run: |
+          endpoint=$(aws elbv2 describe-load-balancers --query 'LoadBalancers[?contains(`DNSName`, `ode`)].[DNSName]' --output text | head -1)
+          echo "endpoint=http://$endpoint" >> $GITHUB_OUTPUT
+
+      - name: Wait for API to be ready
+        run: |
+          timeout 180 bash -c 'until curl -f ${{ steps.api-endpoint.outputs.endpoint }}/health; do sleep 5; done'
+
+      - name: Run health checks
+        run: |
+          echo "Checking API health..."
+          curl -f ${{ steps.api-endpoint.outputs.endpoint }}/health
+
+          echo "Checking API version..."
+          curl -f ${{ steps.api-endpoint.outputs.endpoint }}/version
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests..."
+          # Add actual smoke test commands here
+          # curl -X POST ${{ steps.api-endpoint.outputs.endpoint }}/v1/documents \
+          #   -H "Content-Type: application/json" \
+          #   -d '{"url": "https://example.com/test.pdf"}'
+
+  rollback:
+    name: Rollback (on failure)
+    runs-on: ubuntu-latest
+    needs: [deploy, smoke-test]
+    if: failure()
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name ode-production-cluster --region ${{ env.AWS_REGION }}
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.29.0'
+
+      - name: Rollback deployments
+        run: |
+          echo "Rolling back API deployment..."
+          kubectl rollout undo deployment/ode-api -n ode
+
+          echo "Rolling back Worker deployment..."
+          kubectl rollout undo deployment/ode-worker -n ode
+
+          echo "Rolling back Viewer deployment..."
+          kubectl rollout undo deployment/ode-viewer -n ode
+
+      - name: Notify rollback
+        run: |
+          echo "🔄 Rollback completed due to deployment failure"

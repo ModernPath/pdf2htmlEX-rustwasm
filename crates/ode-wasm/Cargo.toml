@@ -1,0 +1,11 @@
+[package]
+name = "ode-wasm"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+ode-core = { path = "../ode-core" }
+wasm-bindgen = "0.2"
