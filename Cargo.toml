@@ -13,26 +13,24 @@ resolver = "2"
 version = "0.1.0"
 edition = "2021"
 authors = ["ModernPath"]
-license = "MIT OR Apache-2.0"
+license = "GPL-3.0-or-later"
 repository = "https://github.com/modernpath/ode"
 
 [workspace.dependencies]
-thiserror = "=1.0.69"
-anyhow = "=1.0.101"
-serde = { version = "=1.0.228", features = ["derive"] }
-serde_json = "=1.0.149"
-byteorder = "=1.5.0"
-encoding_rs = "=0.8.35"
-flate2 = "=1.1.9"
-tokio = { version = "=1.42.0", features = ["full"] }
-uuid = { version = "=1.11.0", features = ["v4", "serde"] }
-chrono = { version = "=0.4.38", features = ["serde"] }
-getrandom = "=0.2.15"
-tempfile = "=3.14.0"
-time = { version = "=0.3.36", features = ["formatting", "parsing", "macros"] }
-iana-time-zone = "=0.1.60"
-home = "=0.5.5"
-ttf-parser = "=0.20.0"
-base64 = "=0.22.1"
-sha2 = "=0.10.8"
-hex = "=0.4.3"
+thiserror = "2"
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+byteorder = "1"
+encoding_rs = "0.8"
+flate2 = "1"
+tokio = { version = "1", features = ["full"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+getrandom = "0.2"
+tempfile = "3"
+time = { version = "0.3", features = ["formatting", "parsing", "macros"] }
+ttf-parser = "0.25"
+base64 = "0.22"
+sha2 = "0.10"
+hex = "0.4"

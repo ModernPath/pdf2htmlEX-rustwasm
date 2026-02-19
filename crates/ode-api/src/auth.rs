@@ -28,7 +28,7 @@ pub struct Claims {
 #[derive(Clone)]
 pub struct AuthService {
     encoding_key: EncodingKey,
-    decoding_key: DecodingKey<'static>,
+    decoding_key: DecodingKey,
 }
 
 impl AuthService {
@@ -36,12 +36,8 @@ impl AuthService {
         let jwt_secret = env::var("JWT_SECRET")
             .unwrap_or_else(|_| "your-super-secret-jwt-key-change-in-production".to_string());
 
-        // Store the secret in a Box::leak to get 'static lifetime
-        let secret_box: Box<String> = Box::new(jwt_secret);
-        let secret_static: &'static str = Box::leak(secret_box);
-
-        let encoding_key = EncodingKey::from_secret(secret_static.as_ref());
-        let decoding_key = DecodingKey::from_secret(secret_static.as_bytes());
+        let encoding_key = EncodingKey::from_secret(jwt_secret.as_bytes());
+        let decoding_key = DecodingKey::from_secret(jwt_secret.as_bytes());
 
         Ok(Self {
             encoding_key,
