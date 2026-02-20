@@ -1,8 +1,11 @@
 use crate::error::OdeError;
+use flate2::read::ZlibDecoder;
+use std::io::Read;
 
 #[derive(Debug, Clone, Default)]
 pub struct XRef {
     pub entries: Vec<XRefEntry>,
+    pub trailer: Option<Dictionary>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -148,8 +151,9 @@ impl<'a> PdfParser<'a> {
 
     fn find_and_parse_xref(&mut self) -> Result<(), OdeError> {
         if let Some(xref_pos) = self.find_xref_offset() {
-            self.pos = xref_pos;
-            self.parse_xref()?;
+            self.parse_xref_at(xref_pos)?;
+            // Follow /Prev chain to merge earlier xref sections
+            self.follow_prev_chain()?;
         }
 
         Ok(())
@@ -169,17 +173,111 @@ impl<'a> PdfParser<'a> {
         offset_str.parse::<usize>().ok()
     }
 
-    fn parse_xref(&mut self) -> Result<(), OdeError> {
+    fn parse_xref_at(&mut self, offset: usize) -> Result<(), OdeError> {
+        self.pos = offset;
         self.skip_whitespace();
 
         if self.try_consume(b"xref") {
             self.parse_xref_table()?;
+        } else if self.pos < self.data.len() && self.data[self.pos].is_ascii_digit() {
+            // XRef stream object: "N gen obj << /Type /XRef ... >> stream ... endstream"
+            self.parse_xref_stream_object()?;
         } else if self.try_consume(b"trailer") {
-            self.parse_xref_stream()?;
+            self.parse_trailer_only()?;
         } else {
-            return Err(OdeError::PdfParseError("Invalid xref section".to_string()));
+            return Err(OdeError::PdfParseError(
+                format!("Invalid xref section at offset {}", offset),
+            ));
         }
 
+        Ok(())
+    }
+
+    fn follow_prev_chain(&mut self) -> Result<(), OdeError> {
+        let mut visited = std::collections::HashSet::new();
+        loop {
+            let prev_offset = self.xref.as_ref()
+                .and_then(|x| x.trailer.as_ref())
+                .and_then(|t| t.get("Prev"))
+                .and_then(|v| v.as_number())
+                .map(|n| n as usize);
+
+            let prev_offset = match prev_offset {
+                Some(o) if o > 0 && !visited.contains(&o) => o,
+                _ => break,
+            };
+            visited.insert(prev_offset);
+
+            // Save current entries
+            let current_entries = self.xref.as_ref()
+                .map(|x| x.entries.clone())
+                .unwrap_or_default();
+            let current_trailer = self.xref.as_ref()
+                .and_then(|x| x.trailer.clone());
+
+            // Parse xref at Prev offset
+            if self.parse_xref_at(prev_offset).is_ok() {
+                // Merge: current entries override prev entries
+                let mut merged = std::collections::HashMap::new();
+                // Add older (prev) entries first
+                if let Some(ref xref) = self.xref {
+                    for e in &xref.entries {
+                        merged.insert((e.object_id, e.generation), *e);
+                    }
+                }
+                // Override with newer (current) entries
+                for e in &current_entries {
+                    merged.insert((e.object_id, e.generation), *e);
+                }
+                let entries: Vec<XRefEntry> = merged.into_values().collect();
+
+                // Also check /XRefStm in prev trailer
+                let prev_xrefstm = self.xref.as_ref()
+                    .and_then(|x| x.trailer.as_ref())
+                    .and_then(|t| t.get("XRefStm"))
+                    .and_then(|v| v.as_number())
+                    .map(|n| n as usize);
+
+                self.xref = Some(XRef {
+                    entries,
+                    trailer: current_trailer.or_else(|| self.xref.as_ref().and_then(|x| x.trailer.clone())),
+                });
+
+                // If there's an XRefStm (hybrid xref), parse that too
+                if let Some(stm_offset) = prev_xrefstm {
+                    if !visited.contains(&stm_offset) {
+                        visited.insert(stm_offset);
+                        let saved = self.xref.clone();
+                        if self.parse_xref_at(stm_offset).is_ok() {
+                            if let Some(ref stm_xref) = self.xref {
+                                let mut merged = std::collections::HashMap::new();
+                                for e in &stm_xref.entries {
+                                    merged.insert((e.object_id, e.generation), *e);
+                                }
+                                if let Some(ref saved_xref) = saved {
+                                    for e in &saved_xref.entries {
+                                        merged.insert((e.object_id, e.generation), *e);
+                                    }
+                                }
+                                self.xref = Some(XRef {
+                                    entries: merged.into_values().collect(),
+                                    trailer: saved.and_then(|s| s.trailer),
+                                });
+                            }
+                        } else {
+                            self.xref = saved;
+                        }
+                    }
+                }
+            } else {
+                // Restore current state if prev parsing fails
+                self.xref = Some(XRef {
+                    entries: current_entries,
+                    trailer: current_trailer,
+                });
+                break;
+            }
+        }
         Ok(())
     }
 
@@ -242,25 +340,39 @@ impl<'a> PdfParser<'a> {
             }
         }
 
-        self.xref = Some(XRef { entries });
+        // Parse trailer dictionary after the xref table
+        let trailer = if self.try_consume(b"trailer") {
+            self.skip_whitespace();
+            self.parse_dictionary().ok()
+        } else {
+            None
+        };
+
+        // Handle /XRefStm in hybrid-reference PDFs
+        if let Some(ref t) = trailer {
+            if let Some(stm_offset) = t.get("XRefStm").and_then(|v| v.as_number()).map(|n| n as usize) {
+                let saved_pos = self.pos;
+                self.pos = stm_offset;
+                if self.data[self.pos..].first().map_or(false, |b| b.is_ascii_digit()) {
+                    if let Ok(stm_entries) = self.parse_xref_stream_object_entries() {
+                        entries.extend(stm_entries);
+                    }
+                }
+                self.pos = saved_pos;
+            }
+        }
+
+        self.xref = Some(XRef { entries, trailer });
         Ok(())
     }
 
-    fn parse_xref_stream(&mut self) -> Result<(), OdeError> {
+    fn parse_trailer_only(&mut self) -> Result<(), OdeError> {
+        self.skip_whitespace();
         let trailer_dict = self.parse_dictionary()?;
 
-        let size = trailer_dict
-            .entries
-            .iter()
-            .find(|(k, _)| k == "Size")
-            .and_then(|(_, v)| {
-                if let PdfObject::Integer(n) = v {
-                    Some(*n as usize)
-                } else {
-                    None
-                }
-            })
-            .unwrap_or(0);
+        let size = trailer_dict.get("Size")
+            .and_then(|v| v.as_number())
+            .unwrap_or(0.0) as usize;
 
         let entries = (0..size)
             .map(|i| XRefEntry {
@@ -271,8 +383,163 @@ impl<'a> PdfParser<'a> {
             })
             .collect();
 
-        self.xref = Some(XRef { entries });
+        self.xref = Some(XRef { entries, trailer: Some(trailer_dict) });
         Ok(())
+    }
+
+    fn parse_xref_stream_object(&mut self) -> Result<(), OdeError> {
+        let entries = self.parse_xref_stream_object_entries()?;
+        // The trailer dict was stored by parse_xref_stream_object_entries
+        Ok(())
+    }
+
+    /// Parse an XRef stream object and return its entries. Also stores in self.xref.
+    fn parse_xref_stream_object_entries(&mut self) -> Result<Vec<XRefEntry>, OdeError> {
+        // Parse "N gen obj"
+        let _obj_num = self.parse_number()?;
+        let _gen_num = self.parse_number()?;
+        self.skip_whitespace();
+        if !self.try_consume(b"obj") {
+            return Err(OdeError::PdfParseError("Expected 'obj' in XRef stream".to_string()));
+        }
+
+        self.skip_whitespace();
+        let dict = self.parse_dictionary()?;
+
+        // Read stream data
+        self.skip_whitespace();
+        if !self.try_consume(b"stream") {
+            return Err(OdeError::PdfParseError("Expected 'stream' in XRef stream".to_string()));
+        }
+        // Skip \r\n or \n after "stream"
+        if self.pos < self.data.len() && self.data[self.pos] == b'\r' {
+            self.pos += 1;
+        }
+        if self.pos < self.data.len() && self.data[self.pos] == b'\n' {
+            self.pos += 1;
+        }
+
+        let length = dict.get("Length")
+            .and_then(|v| v.as_number())
+            .unwrap_or(0.0) as usize;
+
+        if self.pos + length > self.data.len() {
+            return Err(OdeError::PdfParseError("XRef stream length exceeds file".to_string()));
+        }
+
+        let raw_stream = &self.data[self.pos..self.pos + length];
+
+        // Decompress if needed
+        let filter = dict.get("Filter").and_then(|v| v.as_name()).unwrap_or("");
+        let stream_data = if filter == "FlateDecode" {
+            let mut decoder = ZlibDecoder::new(raw_stream);
+            let mut buf = Vec::new();
+            decoder.read_to_end(&mut buf)
+                .map_err(|e| OdeError::PdfParseError(format!("Failed to decompress XRef stream: {}", e)))?;
+            buf
+        } else {
+            raw_stream.to_vec()
+        };
+
+        // Parse /W array (field widths)
+        let w = dict.get("W")
+            .and_then(|v| v.as_array())
+            .ok_or_else(|| OdeError::PdfParseError("Missing /W in XRef stream".to_string()))?;
+        if w.len() != 3 {
+            return Err(OdeError::PdfParseError("Invalid /W array length".to_string()));
+        }
+        let w1 = w[0].as_number().unwrap_or(0.0) as usize;
+        let w2 = w[1].as_number().unwrap_or(0.0) as usize;
+        let w3 = w[2].as_number().unwrap_or(0.0) as usize;
+        let entry_size = w1 + w2 + w3;
+
+        if entry_size == 0 {
+            self.xref = Some(XRef { entries: Vec::new(), trailer: Some(dict) });
+            return Ok(Vec::new());
+        }
+
+        // Parse /Index array or default to [0, Size]
+        let index_ranges = if let Some(idx_arr) = dict.get("Index").and_then(|v| v.as_array()) {
+            let mut ranges = Vec::new();
+            let mut i = 0;
+            while i + 1 < idx_arr.len() {
+                let start = idx_arr[i].as_number().unwrap_or(0.0) as u64;
+                let count = idx_arr[i + 1].as_number().unwrap_or(0.0) as u64;
+                ranges.push((start, count));
+                i += 2;
+            }
+            ranges
+        } else {
+            let size = dict.get("Size").and_then(|v| v.as_number()).unwrap_or(0.0) as u64;
+            vec![(0, size)]
+        };
+
+        // Parse binary entries
+        let mut entries = Vec::new();
+        let mut stream_pos = 0;
+
+        for (start_id, count) in &index_ranges {
+            for i in 0..*count {
+                if stream_pos + entry_size > stream_data.len() {
+                    break;
+                }
+
+                let entry_type = if w1 > 0 {
+                    read_be_uint(&stream_data[stream_pos..stream_pos + w1])
+                } else {
+                    1 // Default type is 1 (normal) when w1 is 0
+                };
+                let field2 = if w2 > 0 {
+                    read_be_uint(&stream_data[stream_pos + w1..stream_pos + w1 + w2])
+                } else {
+                    0
+                };
+                let field3 = if w3 > 0 {
+                    read_be_uint(&stream_data[stream_pos + w1 + w2..stream_pos + w1 + w2 + w3])
+                } else {
+                    0
+                };
+
+                stream_pos += entry_size;
+
+                match entry_type {
+                    0 => {
+                        // Free entry
+                        entries.push(XRefEntry {
+                            object_id: start_id + i,
+                            generation: field3 as u16,
+                            offset: field2,
+                            in_use: false,
+                        });
+                    }
+                    1 => {
+                        // Normal (uncompressed) entry
+                        entries.push(XRefEntry {
+                            object_id: start_id + i,
+                            generation: field3 as u16,
+                            offset: field2,
+                            in_use: true,
+                        });
+                    }
+                    2 => {
+                        // Compressed entry in object stream — skip for now
+                        // field2 = object stream number, field3 = index in stream
+                        entries.push(XRefEntry {
+                            object_id: start_id + i,
+                            generation: 0,
+                            offset: 0, // Cannot resolve directly
+                            in_use: false, // Mark as not usable directly
+                        });
+                    }
+                    _ => {
+                        // Unknown type, skip
+                    }
+                }
+            }
+        }
+
+        self.xref = Some(XRef { entries: entries.clone(), trailer: Some(dict) });
+        Ok(entries)
     }
 
     fn parse_dictionary(&mut self) -> Result<Dictionary, OdeError> {
@@ -595,6 +862,15 @@ impl<'a> PdfParser<'a> {
     fn peek_bytes(&self, n: usize) -> Option<&[u8]> {
         self.data.get(self.pos..self.pos + n)
     }
+}
+
+/// Read a big-endian unsigned integer from n bytes
+fn read_be_uint(bytes: &[u8]) -> u64 {
+    let mut result = 0u64;
+    for &b in bytes {
+        result = (result << 8) | (b as u64);
+    }
+    result
 }
 
 #[cfg(test)]

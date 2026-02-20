@@ -478,28 +478,43 @@ pub fn parse_pdf(data: &[u8]) -> Result<PdfDocument, OdeError> {
 }
 
 fn parse_trailer_and_catalog(data: &[u8], doc: &mut PdfDocument) -> Result<(), OdeError> {
-    // Only search the last part of the file for the trailer — PDFs have binary streams
-    let search_start = if data.len() > 4096 { data.len() - 4096 } else { 0 };
-    let trailer_str = String::from_utf8_lossy(&data[search_start..]);
-
     let mut size = 0u64;
     let mut root_ref: Option<ObjectReference> = None;
 
-    // Parse /Root N gen R and /Size N from trailer region
-    if let Some(root_pos) = trailer_str.find("/Root") {
-        let rest = &trailer_str[root_pos + 5..];
-        let tokens: Vec<&str> = rest.split_whitespace().take(3).collect();
-        if tokens.len() >= 3 && tokens[2] == "R" {
-            if let (Ok(obj), Ok(gen)) = (tokens[0].parse::<u64>(), tokens[1].parse::<u16>()) {
-                root_ref = Some(ObjectReference(obj, gen));
+    // First try to get trailer from the parsed XRef (most reliable)
+    if let Some(ref xref) = doc.xref {
+        if let Some(ref trailer_dict) = xref.trailer {
+            if let Some(root_obj) = trailer_dict.get("Root") {
+                root_ref = root_obj.as_reference();
+            }
+            if let Some(size_val) = trailer_dict.get("Size").and_then(|v| v.as_number()) {
+                size = size_val as u64;
             }
         }
     }
 
-    if let Some(size_pos) = trailer_str.find("/Size") {
-        let rest = &trailer_str[size_pos + 5..];
-        let size_str = rest.trim().split(|c: char| !c.is_ascii_digit()).next().unwrap_or("0");
-        size = size_str.parse().unwrap_or(0);
+    // Fallback: scan the last part of the file for trailer text
+    if root_ref.is_none() {
+        let search_start = if data.len() > 4096 { data.len() - 4096 } else { 0 };
+        let trailer_str = String::from_utf8_lossy(&data[search_start..]);
+
+        if let Some(root_pos) = trailer_str.find("/Root") {
+            let rest = &trailer_str[root_pos + 5..];
+            let tokens: Vec<&str> = rest.split_whitespace().take(3).collect();
+            if tokens.len() >= 3 && tokens[2] == "R" {
+                if let (Ok(obj), Ok(gen)) = (tokens[0].parse::<u64>(), tokens[1].parse::<u16>()) {
+                    root_ref = Some(ObjectReference(obj, gen));
+                }
+            }
+        }
+
+        if size == 0 {
+            if let Some(size_pos) = trailer_str.find("/Size") {
+                let rest = &trailer_str[size_pos + 5..];
+                let size_str = rest.trim().split(|c: char| !c.is_ascii_digit()).next().unwrap_or("0");
+                size = size_str.parse().unwrap_or(0);
+            }
+        }
     }
 
     doc.trailer = Trailer {

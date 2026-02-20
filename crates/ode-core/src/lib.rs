@@ -55,14 +55,31 @@ pub fn convert_pdf(data: &[u8], config: &ConversionConfig) -> OdeResult<OutputBu
 
     for page_id in start_page..end_page {
         let page_number = page_id + 1;
-        let rendered_page = renderer::render_pdf_page(
+        match renderer::render_pdf_page(
             &document,
             page_id,
             page_number,
             config,
-        )?;
-
-        output_bundle.add_page(rendered_page);
+        ) {
+            Ok(rendered_page) => {
+                output_bundle.add_page(rendered_page);
+            }
+            Err(_e) => {
+                // Skip pages that fail to render, add empty placeholder
+                let page = &document.pages[page_id];
+                output_bundle.add_page(renderer::RenderedPage {
+                    page_number,
+                    width: page.width,
+                    height: page.height,
+                    html: String::new(),
+                    css: String::new(),
+                    text_spans: Vec::new(),
+                    images: Vec::new(),
+                    background_color: None,
+                    font_ids: Vec::new(),
+                });
+            }
+        }
     }
 
     let _ = extract_fonts_from_document(&document, &mut output_bundle, data);
