@@ -209,6 +209,37 @@ impl ToUnicodeCMap {
             }
         }
 
+        // Also check the actual bfchar source code hex width as a secondary signal.
+        // Some CMaps declare <0000><FFFF> codespace but use <XX> format source codes
+        // in their bfchar entries, indicating single-byte despite 2-byte codespace.
+        if !is_single_byte {
+            if let Some(bf_start) = text.find("beginbfchar") {
+                let section = &text[bf_start + 11..];
+                if let Some(bf_end) = section.find("endbfchar") {
+                    let block = &section[..bf_end];
+                    let mut all_single = true;
+                    let mut found_entry = false;
+                    for line in block.lines() {
+                        let line = line.trim();
+                        if line.is_empty() { continue; }
+                        // First <XX...> is the source code
+                        if let Some(hex_start) = line.find('<') {
+                            if let Some(hex_end) = line[hex_start+1..].find('>') {
+                                found_entry = true;
+                                if hex_end > 2 {
+                                    all_single = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if found_entry && all_single {
+                        is_single_byte = true;
+                    }
+                }
+            }
+        }
+
         // Parse beginbfchar...endbfchar sections
         let mut remaining = text.as_ref();
         while let Some(start) = remaining.find("beginbfchar") {
@@ -268,13 +299,6 @@ impl ToUnicodeCMap {
             } else {
                 break;
             }
-        }
-
-        // If codespace says 2-byte but all mapped character codes fit in a single byte,
-        // treat as single-byte. This handles CMaps with <0000><FFFF> codespace that only
-        // map codes 0-255 (common with WinAnsiEncoding fonts).
-        if !is_single_byte && !map.is_empty() && map.keys().all(|&k| k <= 0xFF) {
-            is_single_byte = true;
         }
 
         Self { char_map: map, is_single_byte }
