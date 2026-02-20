@@ -80,6 +80,29 @@ impl PdfObject {
             _ => None,
         }
     }
+
+    pub fn as_string(&self) -> Option<&str> {
+        match self {
+            PdfObject::String(s) => Some(s.as_str()),
+            _ => None,
+        }
+    }
+
+    /// Extract raw bytes from a String object. Converts each char back to u8.
+    /// Works for hex strings and literal strings with byte values 0-255.
+    pub fn as_raw_bytes(&self) -> Option<Vec<u8>> {
+        match self {
+            PdfObject::String(s) => Some(s.chars().map(|c| c as u8).collect()),
+            _ => None,
+        }
+    }
+
+    pub fn as_integer(&self) -> Option<i64> {
+        match self {
+            PdfObject::Integer(n) => Some(*n),
+            _ => None,
+        }
+    }
 }
 
 pub struct PdfParser<'a> {
@@ -696,7 +719,7 @@ impl<'a> PdfParser<'a> {
                         result.push(ch);
                     }
                 }
-            } else if byte.is_ascii() {
+            } else {
                 result.push(byte as char);
             }
         }

@@ -16,6 +16,7 @@ tokio = { workspace = true, features = ["time", "sync"], optional = true }
 ttf-parser.workspace = true
 base64.workspace = true
 sha2.workspace = true
+md-5.workspace = true
 hex.workspace = true
 
 [dev-dependencies]

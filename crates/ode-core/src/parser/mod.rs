@@ -3,6 +3,7 @@ use flate2::read::ZlibDecoder;
 use std::io::Read;
 
 pub mod content_stream;
+mod encryption;
 mod object_parser;
 mod page_tree;
 
@@ -17,6 +18,7 @@ pub struct PdfRefResolver<'a> {
     data: &'a [u8],
     xref: &'a XRef,
     cache: Option<std::cell::RefCell<std::collections::HashMap<ObjectReference, PdfObject>>>,
+    encryption_key: Option<Vec<u8>>,
 }
 
 impl<'a> PdfRefResolver<'a> {
@@ -25,11 +27,17 @@ impl<'a> PdfRefResolver<'a> {
             data,
             xref,
             cache: None,
+            encryption_key: None,
         }
     }
 
     pub fn with_cache(mut self) -> Self {
         self.cache = Some(std::cell::RefCell::new(std::collections::HashMap::new()));
+        self
+    }
+
+    pub fn with_encryption_key(mut self, key: Vec<u8>) -> Self {
+        self.encryption_key = Some(key);
         self
     }
 
@@ -54,7 +62,7 @@ impl<'a> PdfRefResolver<'a> {
         let obj = if let (Some(stm_num), Some(stm_idx)) = (entry.objstm_num, entry.objstm_idx) {
             self.extract_from_object_stream(stm_num, stm_idx)?
         } else {
-            self.parse_object_at_offset(entry.offset as usize)?
+            self.parse_object_at_offset(entry.offset as usize, entry.object_id, entry.generation)?
         };
 
         if let Some(ref cache) = self.cache {
@@ -69,10 +77,18 @@ impl<'a> PdfRefResolver<'a> {
     fn extract_from_object_stream(&self, stm_obj_num: u64, index: u64) -> Option<PdfObject> {
         // Find the object stream entry (must be a normal uncompressed entry)
         let stm_entry = self.xref.entries.iter()
-            .find(|e| e.object_id == stm_obj_num && e.in_use && e.objstm_num.is_none())?;
+            .find(|e| e.object_id == stm_obj_num && e.in_use && e.objstm_num.is_none());
+        if stm_entry.is_none() {
+            return None;
+        }
+        let stm_entry = stm_entry.unwrap();
 
-        // Parse the object stream
-        let stm_obj = self.parse_object_at_offset(stm_entry.offset as usize)?;
+        // Parse the object stream (decrypt using the ObjStm's own obj_id/gen)
+        let stm_obj = self.parse_object_at_offset(stm_entry.offset as usize, stm_entry.object_id, stm_entry.generation);
+        if stm_obj.is_none() {
+            return None;
+        }
+        let stm_obj = stm_obj.unwrap();
         if let PdfObject::Stream(ref data, ref dict) = stm_obj {
             let n = dict.get("N").and_then(|v| v.as_number())? as usize;
             let first = dict.get("First").and_then(|v| v.as_number())? as usize;
@@ -83,7 +99,8 @@ impl<'a> PdfRefResolver<'a> {
 
             // Parse the offset pairs from the beginning of the stream data
             // Format: obj_num1 offset1 obj_num2 offset2 ...
-            let header = String::from_utf8_lossy(&data[..first.min(data.len())]);
+            let header_end = first.min(data.len());
+            let header = String::from_utf8_lossy(&data[..header_end]);
             let tokens: Vec<&str> = header.split_whitespace().collect();
 
             // Each object has 2 tokens: obj_num and offset
@@ -115,7 +132,7 @@ impl<'a> PdfRefResolver<'a> {
         }
     }
 
-    fn parse_object_at_offset(&self, offset: usize) -> Option<PdfObject> {
+    fn parse_object_at_offset(&self, offset: usize, obj_id: u64, gen: u16) -> Option<PdfObject> {
         if offset >= self.data.len() {
             return None;
         }
@@ -182,6 +199,14 @@ impl<'a> PdfRefResolver<'a> {
                 };
 
                 let raw_stream = self.data[stream_start..stream_end].to_vec();
+
+                // Decrypt before decompression if encryption is active
+                let raw_stream = if let Some(ref enc_key) = self.encryption_key {
+                    let obj_key = encryption::compute_object_key(enc_key, obj_id, gen);
+                    encryption::rc4_crypt(&obj_key, &raw_stream)
+                } else {
+                    raw_stream
+                };
 
                 // Decompress if needed
                 let filter = dict.get("Filter").and_then(|v| v.as_name()).map(|s| s.to_string());
@@ -512,13 +537,19 @@ pub fn parse_pdf(data: &[u8]) -> Result<PdfDocument, OdeError> {
     doc.version = version;
     doc.xref = Some(xref.clone());
 
-    parse_trailer_and_catalog(data, &mut doc)?;
+    // Detect encryption before parsing catalog/pages
+    let encryption_key = detect_encryption(data, &xref);
+
+    parse_trailer_and_catalog(data, &mut doc, encryption_key.as_ref())?;
 
     let xref_clone = doc.xref.clone();
     let catalog_pages_root = doc.catalog.as_ref().and_then(|c| c.pages_root);
 
     if let (Some(ref xref), Some(root_ref)) = (&xref_clone, catalog_pages_root) {
-        let resolver = PdfRefResolver::new(data, xref).with_cache();
+        let mut resolver = PdfRefResolver::new(data, xref).with_cache();
+        if let Some(ref key) = encryption_key {
+            resolver = resolver.with_encryption_key(key.clone());
+        }
         let page_parser = PageTreeParser::new(&resolver);
 
         match page_parser.parse_all_pages(root_ref) {
@@ -557,7 +588,51 @@ pub fn parse_pdf(data: &[u8]) -> Result<PdfDocument, OdeError> {
     Ok(doc)
 }
 
-fn parse_trailer_and_catalog(data: &[u8], doc: &mut PdfDocument) -> Result<(), OdeError> {
+/// Detect PDF encryption and compute the file encryption key.
+/// Returns None if the PDF is not encrypted.
+fn detect_encryption(data: &[u8], xref: &XRef) -> Option<Vec<u8>> {
+    let trailer = xref.trailer.as_ref()?;
+    let encrypt_ref = trailer.get("Encrypt")?.as_reference()?;
+
+    // Use a resolver WITHOUT encryption to read the Encrypt dictionary
+    let resolver = PdfRefResolver::new(data, xref);
+    let encrypt_obj = resolver.dereference(encrypt_ref)?;
+    let encrypt_dict = match &encrypt_obj {
+        PdfObject::Dictionary(d) => d,
+        _ => return None,
+    };
+
+    // Only support Standard security handler
+    let filter = encrypt_dict.get("Filter").and_then(|v| v.as_name());
+    if filter != Some("Standard") {
+        return None;
+    }
+
+    let r = encrypt_dict.get("R").and_then(|v| v.as_number()).unwrap_or(2.0) as u32;
+    let length_bits = encrypt_dict.get("Length").and_then(|v| v.as_number()).unwrap_or(40.0) as usize;
+    let key_length = length_bits / 8;
+    let p_value = encrypt_dict.get("P").and_then(|v| v.as_number()).unwrap_or(0.0) as i32;
+
+    let o_value = encrypt_dict.get("O").and_then(|v| v.as_raw_bytes())?;
+
+    // Get file ID from trailer /ID array
+    let id_array = trailer.get("ID").and_then(|v| v.as_array())?;
+    let file_id = id_array.first().and_then(|v| v.as_raw_bytes())?;
+
+    // Compute encryption key with empty password
+    let key = encryption::compute_encryption_key(
+        b"",
+        &o_value,
+        p_value,
+        &file_id,
+        key_length,
+        r,
+    );
+
+    Some(key)
+}
+
+fn parse_trailer_and_catalog(data: &[u8], doc: &mut PdfDocument, encryption_key: Option<&Vec<u8>>) -> Result<(), OdeError> {
     let mut size = 0u64;
     let mut root_ref: Option<ObjectReference> = None;
 
@@ -605,7 +680,10 @@ fn parse_trailer_and_catalog(data: &[u8], doc: &mut PdfDocument) -> Result<(), O
 
     // Resolve Catalog → Pages: /Root points to Catalog obj, which has /Pages N gen R
     if let (Some(root), Some(ref xref)) = (root_ref, &doc.xref) {
-        let resolver = PdfRefResolver::new(data, xref);
+        let mut resolver = PdfRefResolver::new(data, xref);
+        if let Some(key) = encryption_key {
+            resolver = resolver.with_encryption_key(key.clone());
+        }
         if let Some(catalog_obj) = resolver.dereference(root) {
             if let PdfObject::Dictionary(catalog_dict) = &catalog_obj {
                 // Get /Pages reference from the Catalog
