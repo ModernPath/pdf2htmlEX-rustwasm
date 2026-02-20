@@ -419,12 +419,19 @@ pub fn render_pdf_page(
                 }
             }
             ContentOp::SCN | ContentOp::SC => {
+                // sc/SC with 3 operands = DeviceRGB color
+                // sc/SC with 1 operand = DeviceGray color
+                // scn/SCN with 0 operands = Pattern fill (name consumed as font_name) — skip
                 if op.operands.len() >= 3 {
                     let r = (op.operands[0].clamp(0.0, 1.0) * 255.0) as u8;
                     let g = (op.operands[1].clamp(0.0, 1.0) * 255.0) as u8;
                     let b = (op.operands[2].clamp(0.0, 1.0) * 255.0) as u8;
                     graphics_state.fill_color = crate::types::color::Color::new(r, g, b);
+                } else if op.operands.len() == 1 {
+                    let v = (op.operands[0].clamp(0.0, 1.0) * 255.0) as u8;
+                    graphics_state.fill_color = crate::types::color::Color::new(v, v, v);
                 }
+                // 0 operands = Pattern fill — don't change fill_color
             }
             ContentOp::RE => {
                 // Track rectangle for background detection
@@ -432,8 +439,9 @@ pub fn render_pdf_page(
                     pending_rect = Some((op.operands[0], op.operands[1], op.operands[2], op.operands[3]));
                 }
             }
-            ContentOp::F => {
+            ContentOp::F | ContentOp::Fs => {
                 // Fill operation — detect page-filling rectangles for background
+                // f* (even-odd fill) works the same as f for background detection
                 if background_color.is_none() {
                     if let Some((_x, _y, w, h)) = pending_rect {
                         // Check if rect covers a large area (likely page background)
@@ -703,6 +711,9 @@ fn render_form_xobject(
                     let g = (op.operands[1].clamp(0.0, 1.0) * 255.0) as u8;
                     let b = (op.operands[2].clamp(0.0, 1.0) * 255.0) as u8;
                     graphics_state.fill_color = crate::types::color::Color::new(r, g, b);
+                } else if op.operands.len() == 1 {
+                    let v = (op.operands[0].clamp(0.0, 1.0) * 255.0) as u8;
+                    graphics_state.fill_color = crate::types::color::Color::new(v, v, v);
                 }
             }
             ContentOp::RE => {
@@ -710,7 +721,7 @@ fn render_form_xobject(
                     pending_rect = Some((op.operands[0], op.operands[1], op.operands[2], op.operands[3]));
                 }
             }
-            ContentOp::F => { pending_rect = None; }
+            ContentOp::F | ContentOp::Fs => { pending_rect = None; }
             ContentOp::Do => {
                 // Nested Form XObjects or images within the form
                 if let Some(ref nested_name) = op.font_name {

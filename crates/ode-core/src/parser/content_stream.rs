@@ -73,6 +73,39 @@ impl ContentStreamParser {
             if c.is_ascii_digit() || c == b'-' || c == b'+' || c == b'.' {
                 let operand = self.parse_operand()?;
                 self.operands.push(operand);
+            } else if c == b'[' {
+                // TJ array: [(str) kern (str) kern ...] TJ
+                // Parse the array, concatenating all strings into text/text_raw
+                self.position += 1; // skip '['
+                let mut combined_text = String::new();
+                let mut combined_raw: Vec<u8> = Vec::new();
+                while self.position < self.data.len() {
+                    self.skip_whitespace();
+                    if self.position >= self.data.len() { break; }
+                    let ac = self.data[self.position];
+                    if ac == b']' {
+                        self.position += 1;
+                        break;
+                    } else if ac == b'(' {
+                        let (text, raw) = self.parse_literal_string_with_raw()?;
+                        combined_text.push_str(&text);
+                        combined_raw.extend_from_slice(&raw);
+                    } else if ac == b'<' {
+                        let (text, raw) = self.parse_hex_string_with_raw()?;
+                        combined_text.push_str(&text);
+                        combined_raw.extend_from_slice(&raw);
+                    } else if ac.is_ascii_digit() || ac == b'-' || ac == b'+' || ac == b'.' {
+                        // Kerning adjustment number — skip it
+                        let _ = self.parse_operand()?;
+                    } else {
+                        // Unknown byte in array — skip
+                        self.position += 1;
+                    }
+                }
+                if !combined_raw.is_empty() {
+                    self.text = Some(combined_text);
+                    self.text_raw = Some(combined_raw);
+                }
             } else if c == b'(' {
                 let (text, raw) = self.parse_literal_string_with_raw()?;
                 self.text = Some(text);
