@@ -222,6 +222,7 @@ pub fn render_pdf_page(
     let mut background_color: Option<String> = None;
     let mut pending_rect: Option<(f64, f64, f64, f64)> = None;
     let mut rendered_images: Vec<PageImageRef> = Vec::new();
+    let mut filled_rects: Vec<(f64, f64, f64, f64, String)> = Vec::new(); // (x, y, w, h, color)
 
     for op in ops {
         match op.operator {
@@ -440,16 +441,25 @@ pub fn render_pdf_page(
                 }
             }
             ContentOp::F | ContentOp::Fs => {
-                // Fill operation — detect page-filling rectangles for background
-                // f* (even-odd fill) works the same as f for background detection
-                if background_color.is_none() {
-                    if let Some((_x, _y, w, h)) = pending_rect {
-                        // Check if rect covers a large area (likely page background)
-                        let scaled_w = w * ctm.a.abs();
-                        let scaled_h = h * ctm.d.abs();
-                        if scaled_w >= page_width * 0.9 && scaled_h >= page_height * 0.9 {
-                            background_color = Some(graphics_state.fill_color.to_css_string());
-                        }
+                // Fill operation — render filled rectangles
+                if let Some((rx, ry, rw, rh)) = pending_rect {
+                    let (x1, y1) = ctm.transform_point(rx, ry);
+                    let (x2, y2) = ctm.transform_point(rx + rw, ry + rh);
+                    let abs_x = x1.min(x2);
+                    let abs_w = (x2 - x1).abs();
+                    let abs_h = (y2 - y1).abs();
+                    let abs_y = page_height - y1.max(y2);
+
+                    // Full-page rect becomes background_color
+                    if background_color.is_none()
+                        && abs_w >= page_width * 0.9
+                        && abs_h >= page_height * 0.9
+                    {
+                        background_color = Some(graphics_state.fill_color.to_css_string());
+                    } else if abs_w >= 5.0 && abs_h >= 5.0 {
+                        // Significant rectangles rendered as colored divs
+                        let color = graphics_state.fill_color.to_css_string();
+                        filled_rects.push((abs_x, abs_y, abs_w, abs_h, color));
                     }
                 }
                 pending_rect = None;
@@ -508,7 +518,7 @@ pub fn render_pdf_page(
         .collect();
 
     let html = generate_page_html_with_images_and_text(
-        page_number, page_width, page_height, config, &text_spans, &rendered_images,
+        page_number, page_width, page_height, config, &text_spans, &rendered_images, &filled_rects,
     );
     let css = generate_page_css(config);
 
@@ -845,10 +855,19 @@ fn generate_page_html_with_images_and_text(
     _config: &ConversionConfig,
     text_spans: &[TextSpan],
     images: &[PageImageRef],
+    filled_rects: &[(f64, f64, f64, f64, String)],
 ) -> String {
     let mut inner_html = String::new();
 
-    // Render images first (they go behind text)
+    // Render filled rectangles first (background elements)
+    for (x, y, w, h, color) in filled_rects {
+        inner_html.push_str(&format!(
+            "<div style=\"position:absolute;left:{}px;top:{}px;width:{}px;height:{}px;background:{};\"></div>",
+            x, y, w, h, color
+        ));
+    }
+
+    // Render images (on top of rects, behind text)
     for img in images {
         inner_html.push_str(&format!(
             "<img style=\"position:absolute;left:{}px;top:{}px;width:{}px;height:{}px;\" src=\"{}\">",
