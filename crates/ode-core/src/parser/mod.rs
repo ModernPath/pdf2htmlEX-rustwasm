@@ -44,19 +44,75 @@ impl<'a> PdfRefResolver<'a> {
             .xref
             .entries
             .iter()
-            .find(|e| e.object_id == obj_ref.0 && e.generation == obj_ref.1)?;
+            .find(|e| e.object_id == obj_ref.0 && (obj_ref.1 == 0 || e.generation == obj_ref.1))?;
 
         if !entry.in_use {
             return None;
         }
 
-        let obj = self.parse_object_at_offset(entry.offset as usize)?;
+        // Handle compressed objects in object streams
+        let obj = if let (Some(stm_num), Some(stm_idx)) = (entry.objstm_num, entry.objstm_idx) {
+            self.extract_from_object_stream(stm_num, stm_idx)?
+        } else {
+            self.parse_object_at_offset(entry.offset as usize)?
+        };
 
         if let Some(ref cache) = self.cache {
             cache.borrow_mut().insert(obj_ref, obj.clone());
         }
 
         Some(obj)
+    }
+
+    /// Extract an object from an Object Stream (ObjStm).
+    /// The object stream is itself a regular object containing compressed objects.
+    fn extract_from_object_stream(&self, stm_obj_num: u64, index: u64) -> Option<PdfObject> {
+        // Find the object stream entry (must be a normal uncompressed entry)
+        let stm_entry = self.xref.entries.iter()
+            .find(|e| e.object_id == stm_obj_num && e.in_use && e.objstm_num.is_none())?;
+
+        // Parse the object stream
+        let stm_obj = self.parse_object_at_offset(stm_entry.offset as usize)?;
+        if let PdfObject::Stream(ref data, ref dict) = stm_obj {
+            let n = dict.get("N").and_then(|v| v.as_number())? as usize;
+            let first = dict.get("First").and_then(|v| v.as_number())? as usize;
+
+            if index as usize >= n {
+                return None;
+            }
+
+            // Parse the offset pairs from the beginning of the stream data
+            // Format: obj_num1 offset1 obj_num2 offset2 ...
+            let header = String::from_utf8_lossy(&data[..first.min(data.len())]);
+            let tokens: Vec<&str> = header.split_whitespace().collect();
+
+            // Each object has 2 tokens: obj_num and offset
+            let idx = index as usize;
+            if idx * 2 + 1 >= tokens.len() {
+                return None;
+            }
+
+            let obj_offset: usize = tokens[idx * 2 + 1].parse().ok()?;
+            let abs_offset = first + obj_offset;
+
+            // Find the end of this object (start of next, or end of data)
+            let end_offset = if idx + 1 < n && (idx + 1) * 2 + 1 < tokens.len() {
+                let next_offset: usize = tokens[(idx + 1) * 2 + 1].parse().ok()?;
+                first + next_offset
+            } else {
+                data.len()
+            };
+
+            if abs_offset >= data.len() {
+                return None;
+            }
+
+            let obj_data = &data[abs_offset..end_offset.min(data.len())];
+            let mut parser = object_parser::PdfParser::with_position(obj_data, 0);
+            parser.parse_object().ok()
+        } else {
+            None
+        }
     }
 
     fn parse_object_at_offset(&self, offset: usize) -> Option<PdfObject> {

@@ -14,6 +14,10 @@ pub struct XRefEntry {
     pub generation: u16,
     pub offset: u64,
     pub in_use: bool,
+    /// For type-2 (compressed) entries: object stream number containing this object
+    pub objstm_num: Option<u64>,
+    /// For type-2 entries: index within the object stream
+    pub objstm_idx: Option<u64>,
 }
 
 #[derive(Debug, Clone)]
@@ -336,6 +340,8 @@ impl<'a> PdfParser<'a> {
                     generation: gen,
                     offset,
                     in_use,
+                    objstm_num: None,
+                    objstm_idx: None,
                 });
             }
         }
@@ -380,6 +386,8 @@ impl<'a> PdfParser<'a> {
                 generation: 0,
                 offset: 0,
                 in_use: true,
+                objstm_num: None,
+                objstm_idx: None,
             })
             .collect();
 
@@ -510,6 +518,8 @@ impl<'a> PdfParser<'a> {
                             generation: field3 as u16,
                             offset: field2,
                             in_use: false,
+                            objstm_num: None,
+                            objstm_idx: None,
                         });
                     }
                     1 => {
@@ -519,16 +529,20 @@ impl<'a> PdfParser<'a> {
                             generation: field3 as u16,
                             offset: field2,
                             in_use: true,
+                            objstm_num: None,
+                            objstm_idx: None,
                         });
                     }
                     2 => {
-                        // Compressed entry in object stream — skip for now
+                        // Compressed entry in object stream
                         // field2 = object stream number, field3 = index in stream
                         entries.push(XRefEntry {
                             object_id: start_id + i,
                             generation: 0,
-                            offset: 0, // Cannot resolve directly
-                            in_use: false, // Mark as not usable directly
+                            offset: 0,
+                            in_use: true,
+                            objstm_num: Some(field2),
+                            objstm_idx: Some(field3),
                         });
                     }
                     _ => {
